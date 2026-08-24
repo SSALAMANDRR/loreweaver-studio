@@ -2,8 +2,10 @@
 
 - **Problem:** `host_local.rs` dropped the stderr reader the moment the iroh
   ticket + sidecar key arrived (the comment claimed the pipe would keep
-  draining; the `ready` future returned and took the `BufReader` with it). A
-  chatty server could then block on a full stderr pipe. Separately, a
+  draining; the `ready` future owned the `BufReader` BY VALUE and took it
+  with it on return). That drop closed the READ end of the pipe, so the next
+  line the server wrote to stderr got EPIPE — the child was broken by the
+  reader going away, not by a pipe filling up and blocking. Separately, a
   spontaneous crash or external kill never emitted `HostLocalEvent::Exit`, so
   the WebView could sit at `phase: "ready"` / `hostedSession: true` forever.
   A numeric generation that stayed current after `try_observe_exit` then let

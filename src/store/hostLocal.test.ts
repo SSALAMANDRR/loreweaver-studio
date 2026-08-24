@@ -209,6 +209,38 @@ describe("hostLocal store", () => {
     expect(state.hostId).toBeNull()
   })
 
+  it("keeps the host id when a cancel lands during acquisition, so no server goes invisible", async () => {
+    // Acquisition (checkout / verified cache / a download allowed up to 600s)
+    // runs before Rust has a child, so a cancel in that window finds nothing
+    // to kill and `host_local_stop` answers false. Letting the id go here is
+    // what left a ghost: the child seats itself under the old id, every event
+    // it emits is filtered out, and the next start is refused with "a local
+    // server is already running".
+    const connect = vi.fn(async () => {})
+    useConnectionStore.setState({ connect } as never)
+    bridge.hostLocalStop.mockResolvedValueOnce(false)
+    useHostLocalStore.setState({ phase: "starting", hostId: HOST })
+
+    await useHostLocalStore.getState().stop()
+
+    const cancelled = useHostLocalStore.getState()
+    expect(cancelled.hostId).toBe(HOST)
+    expect(cancelled.phase).toBe("starting")
+    expect(cancelled.stoppingHostId).toBeNull()
+
+    // The child finally seats itself under that id — and is recognized.
+    useHostLocalStore.getState().ingest(ev({ kind: "log", level: "step", text: "relay up" }))
+    expect(useHostLocalStore.getState().log).toEqual(["relay up"])
+    useHostLocalStore.getState().ingest(ev({ kind: "ready", ticket: "tkt", key: "kee" }))
+    expect(connect).toHaveBeenCalledWith({ ticket: "tkt", key: "kee" })
+
+    // …so a second cancel has something to kill, and it lands.
+    await useHostLocalStore.getState().stop()
+    expect(bridge.hostLocalStop).toHaveBeenCalledTimes(2)
+    expect(useHostLocalStore.getState().hostId).toBeNull()
+    expect(useHostLocalStore.getState().phase).toBe("idle")
+  })
+
   it("drops a late Ready after Exit so a dead server cannot become ready again", () => {
     useConnectionStore.setState({ connect: vi.fn(async () => {}) } as never)
     useHostLocalStore.setState({

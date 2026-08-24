@@ -176,6 +176,7 @@ export const useHostLocalStore = create<HostLocalState>()(
         // Keep it as stoppingHostId so the confirming Exit is still applied
         // (and only as a confirmation — we are already idle).
         const current = get().hostId
+        const wasStarting = get().phase === "starting"
         set({
           phase: "idle",
           hostedSession: false,
@@ -186,11 +187,26 @@ export const useHostLocalStore = create<HostLocalState>()(
           hostId: null,
           stoppingHostId: current,
         })
+        let stopped = false
         try {
-          await hostLocalStop()
+          stopped = await hostLocalStop()
         } catch {
           // Nothing to stop is fine.
         }
+        if (stopped || !wasStarting || current === null) return
+        // Nothing was there to stop, yet we were mid-start: the cancel landed
+        // during ACQUISITION (checkout / verified cache / a download that may
+        // take minutes), before Rust had a child to kill. That child is still
+        // coming, and it will seat itself under this same id — so take the id
+        // back. Dropping it would leave a server nobody can see: every event
+        // it emits gets filtered out, and the next press of start is refused
+        // with "a local server is already running". Back in `starting`, the
+        // cancel button is still on screen and it will find a child this time.
+        set((s) =>
+          s.hostId === null && s.stoppingHostId === current
+            ? { phase: "starting", hostId: current, stoppingHostId: null }
+            : {},
+        )
       },
 
       ingest: (event) => {
