@@ -49,7 +49,19 @@ export function loadDataUrl(hash: string, resolve: () => Promise<string>): Promi
     return cached
   }
   inflight.add(hash)
-  const pending = resolve()
+  let started: Promise<string>
+  try {
+    started = resolve()
+  } catch (error) {
+    // A resolver that throws SYNCHRONOUSLY never reaches the `.finally`
+    // below, so the hash would stay in `inflight` for the life of the
+    // process — and an in-flight hash is skipped by both the LRU eviction
+    // and `clearDataUrlCache`, so one throw would pin an entry nothing can
+    // ever drop. Release it here and let the throw propagate unchanged.
+    inflight.delete(hash)
+    throw error
+  }
+  const pending = started
     .catch((error: unknown) => {
       cache.delete(hash)
       throw error

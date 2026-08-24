@@ -304,16 +304,11 @@ export const useSessionStore = create<SessionState>((set) => ({
         return
       case "state":
         // `reset:true` marks the snapshot right after a campaign wipe: the
-        // state-frame panel data is already fresh, the scrollback must go,
-        // and so must hook-emitted sidebar `ui` regions (they are campaign
-        // residue). The module `ui_manifest` and the server's installed-pack
-        // card inventory are not campaign state — a story reset keeps the
-        // module, and `pack_cards` is what `.import` can see on this host.
-        set((s) => ({
-          game: frame,
-          entries: frame.reset ? [] : s.entries,
-          uiPanels: frame.reset ? [] : s.uiPanels,
-        }))
+        // panel data is already fresh and the scrollback must go too. The
+        // sidebar `ui` regions STAY — owner's call: a region is a keeper's
+        // standing readout, not campaign residue, and a wipe that emptied
+        // the sidebar would look like the hooks had broken.
+        set((s) => ({ game: frame, entries: frame.reset ? [] : s.entries }))
         return
       case "presence":
         set({ presence: frame })

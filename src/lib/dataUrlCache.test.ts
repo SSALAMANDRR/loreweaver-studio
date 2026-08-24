@@ -55,4 +55,20 @@ describe("dataUrlCache", () => {
     finish("data:live")
     await expect(first).resolves.toBe("data:live")
   })
+
+  it("releases the hash when the resolver throws synchronously", async () => {
+    expect(() =>
+      loadDataUrl(hash(7), () => {
+        throw new Error("no transport")
+      }),
+    ).toThrow("no transport")
+
+    // The proof the hash left the in-flight set: a later entry for it settles,
+    // and both the cap eviction and an explicit clear can still drop it. A
+    // stranded hash would make this entry permanent.
+    await loadDataUrl(hash(7), () => Promise.resolve("data:recovered"))
+    expect(dataUrlCacheHas(hash(7))).toBe(true)
+    clearDataUrlCache()
+    expect(dataUrlCacheHas(hash(7))).toBe(false)
+  })
 })

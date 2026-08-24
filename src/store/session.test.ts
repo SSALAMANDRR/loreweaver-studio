@@ -125,9 +125,11 @@ describe("session store", () => {
     expect(useSessionStore.getState().entries).toHaveLength(0)
   })
 
-  it("clears hook sidebar regions on a campaign wipe, not the module manifest or pack inventory", () => {
-    // TUI GameView drops sidebarUi with the log; the module list and the
-    // server's installed-pack card catalog are not campaign residue.
+  it("keeps sidebar regions, the module manifest and the pack inventory across a campaign wipe", () => {
+    // A wipe takes the scrollback and nothing else on this side. A hook's
+    // sidebar region is a standing readout the keeper put there, the module
+    // list survives a story reset, and the server's installed-pack card
+    // catalog is host state — none of the three is campaign residue.
     usePanelsStore.getState().applyManifest([
       {
         id: "harbour/case-board",
@@ -152,7 +154,7 @@ describe("session store", () => {
     ingest({ type: "state", party: [], initiative: [], online: 1, reset: true })
 
     expect(useSessionStore.getState().entries).toHaveLength(0)
-    expect(useSessionStore.getState().uiPanels).toHaveLength(0)
+    expect(useSessionStore.getState().uiPanels).toHaveLength(1)
     expect(usePanelsStore.getState().manifest.map((panel) => panel.id)).toEqual(["harbour/case-board"])
     expect(useSessionStore.getState().packCards).toEqual([
       { ref: "harbour/cards/pilot.png", pack: "harbour", name: "pilot" },
