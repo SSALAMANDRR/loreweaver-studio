@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { PROTOCOL_VERSION } from "@loreweaver/protocol"
 import type { TransportEvent } from "../lib/transport"
 import { sanitizeTicket, useConnectionStore } from "./connection"
-import { useAdminStore } from "./admin"
 import { useSessionStore } from "./session"
 
 const bridge = vi.hoisted(() => ({
@@ -53,7 +52,6 @@ function reset() {
     refused: false,
   })
   useSessionStore.getState().clear()
-  useAdminStore.getState().reset()
 }
 
 function handle(event: { kind: "status" | "frame"; connectionId?: string; [key: string]: unknown }): void {
@@ -204,46 +202,6 @@ describe("connection store", () => {
     const state = useConnectionStore.getState()
     expect(state.status).toBe("offline")
     expect(state.lastError).toContain("app shell")
-  })
-
-  it("drops keeper-admin leftovers on an explicit new dial, not on auto-reconnect", async () => {
-    useAdminStore.setState({
-      generated: {
-        type: "admin_generated",
-        kind: "module",
-        ok: true,
-        id: "old",
-        name: "Old Room Module",
-        error: "",
-        detail: "installed",
-      },
-      roomOp: {
-        type: "admin_room_op",
-        action: "reset",
-        room: "old-room",
-        keys: 2,
-        store_rows: 4,
-        vector_points: 0,
-      },
-      serverUpdate: { type: "admin_update", status: "failed", output: "stale" },
-      lastError: "stale forbidden",
-    })
-
-    handle({ kind: "status", status: "reconnecting", attempt: 2 })
-    handle({ kind: "status", status: "online", attempt: 2 })
-    expect(useAdminStore.getState().lastError).toBe("stale forbidden")
-    expect(useAdminStore.getState().generated?.name).toBe("Old Room Module")
-    expect(useAdminStore.getState().roomOp?.room).toBe("old-room")
-    expect(useAdminStore.getState().serverUpdate?.status).toBe("failed")
-
-    bridge.tauri = true
-    await useConnectionStore.getState().connect({ ticket: "endpoint-new", key: "k" })
-    const admin = useAdminStore.getState()
-    expect(admin.generated).toBeNull()
-    expect(admin.roomOp).toBeNull()
-    expect(admin.serverUpdate).toBeNull()
-    expect(admin.lastError).toBeNull()
-    expect(bridge.connect).toHaveBeenCalled()
   })
 })
 

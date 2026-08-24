@@ -93,14 +93,9 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
     // actor may arrive before `transportConnect` resolves.
     const connectionId = createConnectionId()
     set({ status: "connecting", attempt: 0, lastError: null, welcome: null, connectionId })
-    // An explicit new dial is a new play session. Auto-reconnect emits status
-    // events only and must leave these stores alone — the operator is still
-    // in the same room, and wiping keeper-admin leftovers (or the chronicle)
-    // on a dropped packet would look like a campaign wipe.
     useSessionStore.getState().clear()
     useMediaStore.getState().reset()
     useAudioStore.getState().reset()
-    useAdminStore.getState().reset()
     try {
       await transportConnect({
         ...params,
