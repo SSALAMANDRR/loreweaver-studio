@@ -1,4 +1,4 @@
-import { act, render, screen, within } from "@testing-library/react"
+import { act, fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -61,6 +61,7 @@ describe("AudioDeck load errors", () => {
     vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined)
     vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue()
     vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => undefined)
+    vi.spyOn(console, "warn").mockImplementation(() => undefined)
   })
 
   afterEach(() => {
@@ -75,7 +76,14 @@ describe("AudioDeck load errors", () => {
 
     const bgm = screen.getByText("Music").closest(".audio-row") as HTMLElement
     expect(await within(bgm).findByRole("alert")).toHaveTextContent("Could not load this layer.")
-    expect(within(bgm).getByRole("alert")).toHaveAttribute("title", "blob exceeds the client cap")
+    // The tooltip is a translated sentence, never the raw cause: this row is
+    // read by a listener whose locale may not be English.
+    expect(within(bgm).getByRole("alert")).toHaveAttribute(
+      "title",
+      "The track never arrived — the room's media store handed back no usable bytes for it.",
+    )
+    // The cause is not thrown away, it just does not go on screen.
+    expect(console.warn).toHaveBeenCalledWith("audio bgm: blob exceeds the client cap")
     expect(screen.queryByText("Could not load this layer.")).toBe(within(bgm).getByRole("alert"))
 
     vi.mocked(assetFetch).mockResolvedValue(5)
@@ -117,5 +125,26 @@ describe("AudioDeck load errors", () => {
       expect(within(bgm).queryByRole("alert")).toBeNull()
     })
     expect(within(bgm).getByText("New tide")).toBeInTheDocument()
+  })
+
+  it("translates a decode failure instead of showing the reason code", async () => {
+    vi.mocked(assetFetch).mockResolvedValue(5)
+    act(() => play("bgm", HASH_BGM, "Tide"))
+    const { container } = render(<AudioDeck />)
+
+    const audio = await vi.waitFor(() => {
+      const element = container.querySelector("audio")
+      if (element === null) throw new Error("the player has not mounted yet")
+      return element
+    })
+    act(() => {
+      fireEvent.error(audio)
+    })
+
+    const bgm = screen.getByText("Music").closest(".audio-row") as HTMLElement
+    expect(await within(bgm).findByRole("alert")).toHaveAttribute(
+      "title",
+      "The bytes arrived, but this window could not decode them as playable audio.",
+    )
   })
 })

@@ -20,6 +20,14 @@ import type { AudioControlFrame, AudioLayer, AudioLayerState, ServerFrame } from
 
 export const AUDIO_LAYERS: AudioLayer[] = ["bgm", "ambience", "sfx"]
 
+/** Why one layer failed to load — a REASON the UI translates, never a message.
+ * `fetch` covers everything before the bytes are playable (not cached, over the
+ * client cap, verification refused); `decode` is the element rejecting bytes it
+ * did receive. An English cause string stored here would reach the listener
+ * untranslated, so the raw cause goes to the console and only the reason is
+ * kept. */
+export type LayerLoadError = "fetch" | "decode"
+
 /** One layer's live state — the wire's `AudioLayerState` plus what the local
  * mixer decides (mute is a listener's choice and never leaves this client). */
 export interface LayerState extends AudioLayerState {
@@ -32,7 +40,7 @@ export interface LayerState extends AudioLayerState {
   /** Fetch/read/decode failure for THIS layer only. Null when the layer is
    * silent or the last load succeeded. A failure on one layer never writes
    * the others. */
-  loadError: string | null
+  loadError: LayerLoadError | null
   /** Bumped to retrigger the player effect (explicit retry, or a play of
    * the same hash). Not a wire field. */
   loadEpoch: number
@@ -64,7 +72,7 @@ interface AudioState {
   setLayerMuted: (layer: AudioLayer, muted: boolean) => void
   setLayerGain: (layer: AudioLayer, gain: number) => void
   /** Record a fetch/read/decode failure on one layer. */
-  setLayerLoadError: (layer: AudioLayer, error: string | null) => void
+  setLayerLoadError: (layer: AudioLayer, error: LayerLoadError | null) => void
   /** Clear that layer's error and bump `loadEpoch` so the player retries. */
   retryLayer: (layer: AudioLayer) => void
   reset: () => void

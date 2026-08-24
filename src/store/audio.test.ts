@@ -93,8 +93,8 @@ describe("audio store", () => {
     useAudioStore.getState().unlock()
     useAudioStore.getState().ingest(control({ layer: "bgm", hash: "abc", title: "Tide" }))
     useAudioStore.getState().ingest(control({ layer: "ambience", hash: "def", title: "Rain" }))
-    useAudioStore.getState().setLayerLoadError("bgm", "blob exceeds the client cap")
-    expect(useAudioStore.getState().layers.bgm.loadError).toBe("blob exceeds the client cap")
+    useAudioStore.getState().setLayerLoadError("bgm", "fetch")
+    expect(useAudioStore.getState().layers.bgm.loadError).toBe("fetch")
     expect(useAudioStore.getState().layers.ambience.loadError).toBeNull()
 
     // A new play of the same hash is a natural retry: error gone, epoch up.
@@ -107,18 +107,18 @@ describe("audio store", () => {
 
   it("retries one layer without touching the others", () => {
     useAudioStore.getState().setLayerLoadError("sfx", "decode")
-    useAudioStore.getState().setLayerLoadError("bgm", "still failing")
+    useAudioStore.getState().setLayerLoadError("bgm", "fetch")
     const sfxEpoch = useAudioStore.getState().layers.sfx.loadEpoch
     useAudioStore.getState().retryLayer("sfx")
     expect(useAudioStore.getState().layers.sfx.loadError).toBeNull()
     expect(useAudioStore.getState().layers.sfx.loadEpoch).toBe(sfxEpoch + 1)
-    expect(useAudioStore.getState().layers.bgm.loadError).toBe("still failing")
+    expect(useAudioStore.getState().layers.bgm.loadError).toBe("fetch")
   })
 
   it("drops a load error when the hash changes, including on a replayed state", () => {
     useAudioStore.getState().unlock()
     useAudioStore.getState().ingest(control({ layer: "bgm", hash: "old" }))
-    useAudioStore.getState().setLayerLoadError("bgm", "not cached")
+    useAudioStore.getState().setLayerLoadError("bgm", "fetch")
     useAudioStore.getState().ingest({
       type: "audio_state",
       layers: [{ layer: "bgm", hash: "new", playing: true }],

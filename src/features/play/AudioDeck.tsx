@@ -15,6 +15,9 @@
 //
 // Fetch/read/decode failures are NOT silent. Each layer records its own
 // `loadError`; a retry (or a new play / hash change) clears only that layer.
+// What a layer records is a REASON (`fetch` / `decode`), because the mixer row
+// shows it as a tooltip and a listener reading zh must not be handed an English
+// cause string. The cause itself goes to the console, for whoever is debugging.
 
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -69,7 +72,8 @@ function LayerPlayer({ layer }: { layer: LayerState }) {
         if (!live) return
         dropUrl()
         setSrc(null)
-        setLayerLoadError(layer.layer, cause instanceof Error ? cause.message : String(cause))
+        console.warn(`audio ${layer.layer}: ${cause instanceof Error ? cause.message : String(cause)}`)
+        setLayerLoadError(layer.layer, "fetch")
       })
     return () => {
       live = false
@@ -136,7 +140,11 @@ function LayerRow({ layer }: { layer: LayerState }) {
       </span>
       {layer.loadError !== null ? (
         <>
-          <span className="audio-load-error" role="alert" title={layer.loadError}>
+          <span
+            className="audio-load-error"
+            role="alert"
+            title={t(`play.audio.loadError.${layer.loadError}`)}
+          >
             {t("play.audio.loadFailed")}
           </span>
           <button type="button" className="ghost-button" onClick={() => retryLayer(layer.layer)}>

@@ -357,6 +357,10 @@
       "keeperImportRun": "Import",
       "keeperHint": "These send the same keeper commands the TUI does (.bgm / .ambience / .sfx / .audio import), and the server broadcasts the result to everyone. The track list is this room's own audio library — a pack install is host-wide, so bringing its soundtrack into a room stays your call.",
       "loadFailed": "Could not load this layer.",
+      "loadError": {
+        "fetch": "The track never arrived — the room's media store handed back no usable bytes for it.",
+        "decode": "The bytes arrived, but this window could not decode them as playable audio."
+      },
       "retry": "Retry"
     }
   },
