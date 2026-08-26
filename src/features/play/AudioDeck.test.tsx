@@ -127,6 +127,76 @@ describe("AudioDeck load errors", () => {
     expect(within(bgm).getByText("New tide")).toBeInTheDocument()
   })
 
+  it("does not let the error of a replaced load bury the load that replaced it", async () => {
+    // Cleanup revoked the blob URL while the mounted element was still pointing
+    // at it, so the element raised `error` for a source pulled out from under
+    // it. That callback is asynchronous: by the time it ran, the NEXT load had
+    // already succeeded — and the handler, which asks no questions about which
+    // load it belongs to, wrote `decode` over it and dropped the src. A hash
+    // change or a Retry click could therefore silence a layer that had just
+    // loaded perfectly well.
+    let minted = 0
+    vi.spyOn(URL, "createObjectURL").mockImplementation(() => `blob:audio-${++minted}`)
+    vi.mocked(assetFetch).mockResolvedValue(5)
+    act(() => play("bgm", HASH_BGM, "Tide"))
+    const { container } = render(<AudioDeck />)
+
+    const replaced = await vi.waitFor(() => {
+      const element = container.querySelector("audio")
+      if (element?.getAttribute("src") !== "blob:audio-1") throw new Error("first load not mounted")
+      return element
+    })
+
+    act(() => play("bgm", HASH_AMB, "New tide"))
+    await vi.waitFor(() => {
+      const element = container.querySelector("audio")
+      if (element?.getAttribute("src") !== "blob:audio-2") throw new Error("second load not mounted")
+    })
+
+    // The first load's element finally reports the source it lost.
+    act(() => {
+      fireEvent.error(replaced)
+    })
+
+    const bgm = screen.getByText("Music").closest(".audio-row") as HTMLElement
+    expect(within(bgm).queryByRole("alert")).toBeNull()
+    expect(useAudioStore.getState().layers.bgm.loadError).toBeNull()
+    expect(container.querySelector("audio")?.getAttribute("src")).toBe("blob:audio-2")
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith("blob:audio-2")
+  })
+
+  it("never revokes a URL the mounted element is still pointing at", async () => {
+    // The other half: the element must never be left naming a URL that has
+    // already been revoked. Revocation waits until the DOM has moved on.
+    let mounted: HTMLElement | null = null
+    const revokedWhileShown: string[] = []
+    let minted = 0
+    vi.spyOn(URL, "createObjectURL").mockImplementation(() => `blob:audio-${++minted}`)
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation((url) => {
+      if (mounted?.querySelector("audio")?.getAttribute("src") === url) revokedWhileShown.push(url)
+    })
+    vi.mocked(assetFetch).mockResolvedValue(5)
+    act(() => play("bgm", HASH_BGM, "Tide"))
+    const { container } = render(<AudioDeck />)
+    mounted = container
+
+    await vi.waitFor(() => {
+      if (container.querySelector("audio")?.getAttribute("src") !== "blob:audio-1") {
+        throw new Error("first load not mounted")
+      }
+    })
+    act(() => play("bgm", HASH_AMB, "New tide"))
+    await vi.waitFor(() => {
+      if (container.querySelector("audio")?.getAttribute("src") !== "blob:audio-2") {
+        throw new Error("second load not mounted")
+      }
+    })
+
+    expect(revokedWhileShown).toEqual([])
+    // …and the URL nothing points at any more is still let go.
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:audio-1")
+  })
+
   it("translates a decode failure instead of showing the reason code", async () => {
     vi.mocked(assetFetch).mockResolvedValue(5)
     act(() => play("bgm", HASH_BGM, "Tide"))

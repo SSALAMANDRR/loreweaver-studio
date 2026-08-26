@@ -37,23 +37,56 @@ import {
 
 function LayerPlayer({ layer }: { layer: LayerState }) {
   const element = useRef<HTMLAudioElement | null>(null)
-  const objectUrl = useRef<string | null>(null)
-  const [src, setSrc] = useState<string | null>(null)
+  /** Loads are numbered, and one mounted element belongs to exactly one of
+   * them — that is what lets a verdict be attributed to the load it came from. */
+  const loads = useRef(0)
+  /** The URL the mounted element is pointing at right now. */
+  const mountedUrl = useRef<string | null>(null)
+  /** URLs the element has been pointed AWAY from. Revoked by the effect below,
+   * i.e. after the commit that moved it — never while a live element still
+   * names them. */
+  const releasable = useRef<string[]>([])
+  const [load, setLoad] = useState<{ url: string; token: number } | null>(null)
   const masterMuted = useAudioStore((s) => s.muted)
   const unlocked = useAudioStore((s) => s.unlocked)
   const setLayerLoadError = useAudioStore((s) => s.setLayerLoadError)
   const hash = layer.hash ?? ""
 
+  // Let go of what the element has already moved off. Revoking a URL an
+  // attached element is still pointing at makes that element raise `error` for
+  // bytes nothing was ever wrong with — an error the layer then wore as a
+  // decode failure. This runs after React has written the new `src`, so by the
+  // time a URL is revoked nothing in the document names it.
   useEffect(() => {
-    const dropUrl = () => {
-      if (objectUrl.current !== null) {
-        URL.revokeObjectURL(objectUrl.current)
-        objectUrl.current = null
+    if (releasable.current.length === 0) return
+    for (const url of releasable.current) URL.revokeObjectURL(url)
+    releasable.current = []
+  }, [load])
+
+  // Unmount: nothing can be pointing at any of these any more.
+  useEffect(
+    () => () => {
+      for (const url of releasable.current) URL.revokeObjectURL(url)
+      releasable.current = []
+      if (mountedUrl.current !== null) {
+        URL.revokeObjectURL(mountedUrl.current)
+        mountedUrl.current = null
+      }
+    },
+    [],
+  )
+
+  useEffect(() => {
+    const token = (loads.current += 1)
+    const release = () => {
+      if (mountedUrl.current !== null) {
+        releasable.current.push(mountedUrl.current)
+        mountedUrl.current = null
       }
     }
     if (!hash || !isTauri()) {
-      dropUrl()
-      setSrc(null)
+      release()
+      setLoad(null)
       return
     }
     let live = true
@@ -63,21 +96,20 @@ function LayerPlayer({ layer }: { layer: LayerState }) {
           URL.revokeObjectURL(url)
           return
         }
-        dropUrl()
-        objectUrl.current = url
-        setSrc(url)
+        release()
+        mountedUrl.current = url
+        setLoad({ url, token })
         setLayerLoadError(layer.layer, null)
       })
       .catch((cause: unknown) => {
         if (!live) return
-        dropUrl()
-        setSrc(null)
+        release()
+        setLoad(null)
         console.warn(`audio ${layer.layer}: ${cause instanceof Error ? cause.message : String(cause)}`)
         setLayerLoadError(layer.layer, "fetch")
       })
     return () => {
       live = false
-      dropUrl()
     }
   }, [hash, layer.layer, layer.mime, layer.loadEpoch, setLayerLoadError])
 
@@ -86,7 +118,7 @@ function LayerPlayer({ layer }: { layer: LayerState }) {
     if (audio === null) return
     audio.volume = effectiveVolume(layer, masterMuted)
     audio.loop = layer.loop === true
-    if (layer.playing && unlocked && src !== null) {
+    if (layer.playing && unlocked && load !== null) {
       try {
         const attempt = audio.play()
         if (attempt !== undefined && typeof attempt.catch === "function") {
@@ -101,23 +133,44 @@ function LayerPlayer({ layer }: { layer: LayerState }) {
     } else {
       audio.pause()
     }
-  }, [layer, masterMuted, unlocked, src])
+  }, [layer, masterMuted, unlocked, load])
 
-  if (src === null) return null
+  if (load === null) return null
   // Not `controls`: the keeper drives playback, and the listener's own controls
   // are the mixer rows below.
   return (
     <audio
-      ref={element}
-      src={src}
+      // One element per LOAD. A `<audio>` that outlives its own source cannot
+      // say which load its late `error` belongs to, and this one is the only
+      // place that answer exists.
+      key={load.token}
+      ref={(node) => {
+        element.current = node
+        // React only passes null when a ref callback returns no cleanup, so
+        // this is the type's shape rather than a case that happens here.
+        if (node === null) return
+        return () => {
+          // The element a newer load replaced is detached, and a detached media
+          // element goes on playing. Silence it on the way out.
+          if (!node.paused) node.pause()
+          if (element.current === node) element.current = null
+        }
+      }}
+      src={load.url}
       preload="auto"
       onError={() => {
+        // Load-scoped, both ways: this element belongs to one load, and only
+        // the load that is still the current one may write a verdict. An error
+        // queued for a load that has since been replaced would otherwise bury
+        // the load that replaced it — a hash change, or a Retry that had just
+        // succeeded, silenced by the failure of the source it replaced.
+        if (load.token !== loads.current) return
         setLayerLoadError(layer.layer, "decode")
-        if (objectUrl.current !== null) {
-          URL.revokeObjectURL(objectUrl.current)
-          objectUrl.current = null
+        if (mountedUrl.current !== null) {
+          releasable.current.push(mountedUrl.current)
+          mountedUrl.current = null
         }
-        setSrc(null)
+        setLoad(null)
       }}
     />
   )
