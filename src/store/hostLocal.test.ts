@@ -47,6 +47,7 @@ function reset() {
     exitCode: null,
     hostId: null,
     stoppingHostId: null,
+    parkedReady: null,
     hostedSession: false,
     homeOverride: "",
     effectiveHome: "",
@@ -239,6 +240,70 @@ describe("hostLocal store", () => {
     expect(bridge.hostLocalStop).toHaveBeenCalledTimes(2)
     expect(useHostLocalStore.getState().hostId).toBeNull()
     expect(useHostLocalStore.getState().phase).toBe("idle")
+  })
+
+  it("keeps a Ready that lands while the cancel's stop call is still in flight", async () => {
+    // The window the landed test does not cover: `stop` clears `hostId` BEFORE
+    // it awaits, and until that await settles the only event still recognized
+    // is the confirming Exit. A Ready arriving inside the window was dropped —
+    // and the recovery below then put the very same id back, so the ticket was
+    // lost for a session the store went on to own. No first-run persisted
+    // credentials exist to reconnect with: the table is simply unreachable.
+    const connect = vi.fn(async () => {})
+    useConnectionStore.setState({ connect } as never)
+    let settleStop: (stopped: boolean) => void = () => {
+      throw new Error("settleStop not armed")
+    }
+    bridge.hostLocalStop.mockImplementationOnce(
+      () =>
+        new Promise<boolean>((resolve) => {
+          settleStop = resolve
+        }),
+    )
+    useHostLocalStore.setState({ phase: "starting", hostId: HOST })
+
+    const cancelled = useHostLocalStore.getState().stop()
+    useHostLocalStore.getState().ingest(ev({ kind: "ready", ticket: "tkt", key: "kee" }))
+    // Nothing was there to kill — the cancel landed during acquisition, and the
+    // child that announced itself above is the one still coming.
+    settleStop(false)
+    await cancelled
+
+    const state = useHostLocalStore.getState()
+    expect(state.phase).toBe("ready")
+    expect(state.hostId).toBe(HOST)
+    expect(state.lastTicket).toBe("tkt")
+    expect(state.lastKey).toBe("kee")
+    expect(connect).toHaveBeenCalledWith({ ticket: "tkt", key: "kee" })
+  })
+
+  it("throws away a window Ready when the cancel really did kill that server", async () => {
+    // The other half of the same reconciliation: the stop DID take a child
+    // down, so the Ready it managed to emit on the way out belongs to a dead
+    // process. Applying it would dial a table that no longer exists.
+    const connect = vi.fn(async () => {})
+    useConnectionStore.setState({ connect } as never)
+    let settleStop: (stopped: boolean) => void = () => {
+      throw new Error("settleStop not armed")
+    }
+    bridge.hostLocalStop.mockImplementationOnce(
+      () =>
+        new Promise<boolean>((resolve) => {
+          settleStop = resolve
+        }),
+    )
+    useHostLocalStore.setState({ phase: "starting", hostId: HOST })
+
+    const cancelled = useHostLocalStore.getState().stop()
+    useHostLocalStore.getState().ingest(ev({ kind: "ready", ticket: "doomed", key: "kee" }))
+    settleStop(true)
+    await cancelled
+
+    const state = useHostLocalStore.getState()
+    expect(state.phase).toBe("idle")
+    expect(state.hostId).toBeNull()
+    expect(state.lastTicket).toBe("")
+    expect(connect).not.toHaveBeenCalled()
   })
 
   it("drops a late Ready after Exit so a dead server cannot become ready again", () => {

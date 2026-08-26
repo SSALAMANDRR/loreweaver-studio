@@ -37,6 +37,11 @@ interface HostLocalState {
   hostId: string | null
   /** After an explicit stop, only the confirming Exit for this id is accepted. */
   stoppingHostId: string | null
+  /** A Ready that arrived while an explicit stop was still in flight. HELD, not
+   * applied: whether it belongs to a child the stop killed or to one still on
+   * its way is a question only the stop's own answer settles, and it settles
+   * after the event has already crossed the bridge. */
+  parkedReady: HostLocalEvent | null
   /** Whether the CURRENT connection came from our own local server. */
   hostedSession: boolean
   /** User-picked server folder ("" = the TUI-shared default chain). Persisted. */
@@ -86,6 +91,7 @@ export const useHostLocalStore = create<HostLocalState>()(
       exitCode: null,
       hostId: null,
       stoppingHostId: null,
+      parkedReady: null,
       hostedSession: false,
       homeOverride: "",
       effectiveHome: "",
@@ -126,6 +132,7 @@ export const useHostLocalStore = create<HostLocalState>()(
           devSourceRoot,
           hostId,
           stoppingHostId: null,
+          parkedReady: null,
         })
         try {
           await subscribeOnce(get().ingest)
@@ -186,6 +193,7 @@ export const useHostLocalStore = create<HostLocalState>()(
           exitCode: null,
           hostId: null,
           stoppingHostId: current,
+          parkedReady: null,
         })
         let stopped = false
         try {
@@ -193,6 +201,11 @@ export const useHostLocalStore = create<HostLocalState>()(
         } catch {
           // Nothing to stop is fine.
         }
+        // A Ready that crossed the bridge during the await is parked, not
+        // applied (see `ingest`). Reconcile it with the answer we just got:
+        // a stop that killed something makes it a dead child's last word.
+        const parked = get().parkedReady
+        set({ parkedReady: null })
         if (stopped || !wasStarting || current === null) return
         // Nothing was there to stop, yet we were mid-start: the cancel landed
         // during ACQUISITION (checkout / verified cache / a download that may
@@ -207,10 +220,22 @@ export const useHostLocalStore = create<HostLocalState>()(
             ? { phase: "starting", hostId: current, stoppingHostId: null }
             : {},
         )
+        // The id is ours again, so the Ready we parked belongs to us after all:
+        // it announced the child this cancel could not find. Dropping it here
+        // would leave the table `starting` forever with the only ticket it will
+        // ever be handed already thrown away.
+        if (parked !== null && get().hostId === current) get().ingest(parked)
       },
 
       ingest: (event) => {
-        if (!hostEventApplies(event, get().hostId, get().stoppingHostId)) return
+        const { hostId, stoppingHostId } = get()
+        // A stop in flight has cleared `hostId` but not yet learned whether it
+        // killed anything. Hold this Ready until it does — see `stop`.
+        if (event.kind === "ready" && hostId === null && stoppingHostId === event.hostId) {
+          set({ parkedReady: event })
+          return
+        }
+        if (!hostEventApplies(event, hostId, stoppingHostId)) return
         switch (event.kind) {
           case "log":
             set((s) => ({ log: [...s.log.slice(-(MAX_LOG_LINES - 1)), event.text] }))
