@@ -41,4 +41,13 @@
 - **Rule home:** `src-tauri/src/host_local.rs` (slot / host id / drain /
   monitor helpers); `src/lib/hostLocal.ts` `hostEventApplies`;
   `src/store/hostLocal.ts` `ingest` first line + `stop()`.
+- **Amended 2026-08-26:** the id is only meaningful for events that arrive
+  outside `stop`'s own await, so a Ready landing inside it is now PARKED and
+  reconciled with what the stop answers (killed a child → a dead process's
+  last word; found none → the announcement of the child the cancel could not
+  find); a readiness Error stops the server it cannot use rather than only
+  flipping `phase` (`watch_output` kills nothing, so the alternative is a live
+  server nobody holds credentials for); and both of `start`'s continuations are
+  guarded on still owning the store, since a cancel leaves `idle` and the next
+  press can outrun the invoke it cancelled.
 - **Date:** 2026-08-22.

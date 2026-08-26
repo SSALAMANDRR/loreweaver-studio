@@ -25,7 +25,14 @@
   must not write offline/null — only the still-current id may settle.
   `disconnect()` writes state only before its invoke, so a later connect
   is safe from that function's tail.
-- **Rule home:** `src-tauri/src/transport_bridge.rs` (`bridged_event`),
+- **Rule home:** `src-tauri/src/transport_bridge.rs` (`bridged_event`,
+  `SlotOwner` / `take_for_replace` / `take_if_owner`),
   `src/store/connection.ts` (`handleEvent` / `connect` / `disconnect`),
   `crates/transport/src/client.rs` (`Command::Send` + `ClientHandle::send_frame`).
+- **Amended 2026-08-26:** the epoch also governs the SLOT, not just the
+  envelope — the seat records its owner (id + page load + that page's order),
+  refuses a dial the WebView has already outrun without touching the incumbent,
+  and tears down only its own occupant on disconnect; the page load rides along
+  because a counter alone would fence a reloaded WebView out behind the epochs
+  of the page it replaced.
 - **Date:** 2026-08-22.
