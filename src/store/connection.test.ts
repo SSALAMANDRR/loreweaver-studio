@@ -7,6 +7,7 @@ import { useSessionStore } from "./session"
 const bridge = vi.hoisted(() => ({
   tauri: false,
   nextIds: [] as string[],
+  seq: 0,
   connect: vi.fn(),
   disconnect: vi.fn(),
 }))
@@ -16,12 +17,18 @@ vi.mock("../lib/transport", async (importOriginal) => {
   return {
     ...actual,
     isTauri: () => bridge.tauri,
-    createConnectionId: () => {
+    createConnection: () => {
       const id = bridge.nextIds.shift()
-      return id === undefined ? actual.createConnectionId() : id
+      bridge.seq += 1
+      return {
+        connectionId: id ?? actual.createConnection().connectionId,
+        session: "page-under-test",
+        seq: bridge.seq,
+      }
     },
     transportConnect: ((...args: unknown[]) => bridge.connect(...args)) as typeof actual.transportConnect,
-    transportDisconnect: (() => bridge.disconnect()) as typeof actual.transportDisconnect,
+    transportDisconnect: ((...args: unknown[]) =>
+      bridge.disconnect(...args)) as typeof actual.transportDisconnect,
   }
 })
 
@@ -39,6 +46,7 @@ const GEN = "gen-test"
 function reset() {
   bridge.tauri = false
   bridge.nextIds = []
+  bridge.seq = 0
   bridge.connect.mockReset()
   bridge.connect.mockResolvedValue(undefined)
   bridge.disconnect.mockReset()
@@ -342,6 +350,49 @@ describe("connection generation", () => {
     await pendingB
     expect(useConnectionStore.getState().connectionId).toBe("gen-B")
     expect(useConnectionStore.getState().status).toBe("connecting")
+  })
+
+  it("hands the bridge an ordering a stale dial can be refused by", async () => {
+    // The Rust slot used to seat whoever invoked last, whatever the WebView was
+    // on: a slow dial from a generation the operator had left would close the
+    // live actor and seat itself in its place, and every event the replacement
+    // emitted was then dropped on arrival while the offline from the actor it
+    // had just killed was accepted. A fast reconnect took a healthy table
+    // apart. The slot can only refuse that dial if it is told who is asking.
+    bridge.tauri = true
+    bridge.nextIds = ["gen-A", "gen-B"]
+
+    await useConnectionStore.getState().connect({ ticket: "endpoint-a", key: "ka" })
+    await useConnectionStore.getState().connect({ ticket: "endpoint-b", key: "kb" })
+
+    const first = bridge.connect.mock.calls[0][0].generation
+    const second = bridge.connect.mock.calls[1][0].generation
+    expect(first.connectionId).toBe("gen-A")
+    expect(second.connectionId).toBe("gen-B")
+    expect(second.session).toBe(first.session)
+    expect(second.seq).toBeGreaterThan(first.seq)
+  })
+
+  it("names the generation it is dropping, so a disconnect cannot take a newer actor with it", async () => {
+    bridge.tauri = true
+    bridge.nextIds = ["gen-A"]
+    await useConnectionStore.getState().connect({ ticket: "endpoint-a", key: "ka" })
+
+    await useConnectionStore.getState().disconnect()
+
+    expect(bridge.disconnect).toHaveBeenCalledWith("gen-A")
+    expect(useConnectionStore.getState().connectionId).toBeNull()
+  })
+
+  it("holds no generation, so it asks the bridge to drop nothing", async () => {
+    // After a reload the store owns no connection. The actor the previous page
+    // seated is not ours to close — the next dial replaces it.
+    bridge.tauri = true
+    useConnectionStore.setState({ connectionId: null })
+
+    await useConnectionStore.getState().disconnect()
+
+    expect(bridge.disconnect).toHaveBeenCalledWith(null)
   })
 
   it("does not let a stale connect success write after a newer generation owns the store", async () => {

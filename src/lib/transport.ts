@@ -25,17 +25,46 @@ export type TransportEvent =
     }
   | { kind: "frame"; connectionId: string; frame: unknown }
 
+/** One explicit dial's identity, and where it sits in the order the Rust slot
+ * refuses a dial the WebView has already outrun by. Mirrors `SlotOwner`. */
+export interface ConnectionGeneration {
+  /** Bridge generation for this dial; stamped on every forwarded event. */
+  connectionId: string
+  /** The page load that minted it. */
+  session: string
+  /** Its place in that page load's order. */
+  seq: number
+}
+
 export interface TransportConnectParams {
   ticket: string
   key: string
   name?: string
-  /** Bridge generation for this explicit dial; stamped on every forwarded event. */
-  connectionId: string
+  generation: ConnectionGeneration
 }
 
-/** Fresh id for one explicit `transport_connect`. Not a protocol field. */
-export function createConnectionId(): string {
-  return globalThis.crypto.randomUUID()
+/** What a caller supplies for one dial. The generation is not theirs to mint:
+ * the connection store owns it, because it owns what the generation gates. */
+export type DialParams = Omit<TransportConnectParams, "generation">
+
+/** One page load = one transport session, with its own generation counter.
+ *
+ * The counter alone cannot be trusted across a reload: a fresh page starts at
+ * 1 again while the Rust slot still holds an epoch from the page before it, so
+ * a rule written on numbers alone would fence the live page out behind a dead
+ * one and leave the app unable to connect to anything. The session id is what
+ * tells the slot which of the two is the page that is actually here. */
+const TRANSPORT_SESSION = globalThis.crypto.randomUUID()
+let generations = 0
+
+/** Fresh generation for one explicit `transport_connect`. Not a protocol field. */
+export function createConnection(): ConnectionGeneration {
+  generations += 1
+  return {
+    connectionId: globalThis.crypto.randomUUID(),
+    session: TRANSPORT_SESSION,
+    seq: generations,
+  }
 }
 
 /** True when running inside the Tauri shell (false in vitest / plain browser). */
@@ -47,8 +76,11 @@ export async function transportConnect(params: TransportConnectParams): Promise<
   await invoke("transport_connect", { ...params })
 }
 
-export async function transportDisconnect(): Promise<void> {
-  await invoke("transport_disconnect")
+/** Drop the actor this generation seated. The slot tears down only its own
+ * occupant, so a disconnect a newer dial has already outrun does nothing —
+ * and `null` (a page holding no generation of its own) drops nothing at all. */
+export async function transportDisconnect(connectionId: string | null): Promise<void> {
+  await invoke("transport_disconnect", { connectionId })
 }
 
 export async function transportSend(frame: ClientFrame): Promise<void> {

@@ -2,11 +2,11 @@ import { create } from "zustand"
 import { isServerFrame, protocolMismatch, type WelcomeFrame } from "@loreweaver/protocol"
 import i18n from "../i18n"
 import {
-  createConnectionId,
+  createConnection,
   isTauri,
   transportConnect,
   transportDisconnect,
-  type TransportConnectParams,
+  type DialParams,
   type TransportEvent,
   type TransportStatus,
 } from "../lib/transport"
@@ -49,7 +49,7 @@ interface ConnectionState {
   /** A handshake this store refused. While set, transport statuses are ignored
    * — see `handleEvent`. Cleared only by an explicit new connect. */
   refused: boolean
-  connect: (params: Omit<TransportConnectParams, "connectionId">) => Promise<void>
+  connect: (params: DialParams) => Promise<void>
   disconnect: () => Promise<void>
   /** Single entry point for everything the Rust bridge emits. */
   handleEvent: (event: TransportEvent) => void
@@ -90,25 +90,36 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
     // Mint the new generation BEFORE clear() and BEFORE the invoke returns.
     // Events already queued from the previous actor carry the old id and
     // must not refill the session we are about to wipe; events from the new
-    // actor may arrive before `transportConnect` resolves.
-    const connectionId = createConnectionId()
-    set({ status: "connecting", attempt: 0, lastError: null, welcome: null, connectionId })
+    // actor may arrive before `transportConnect` resolves. The generation also
+    // travels to Rust, which seats an actor only for a dial the WebView has
+    // not already outrun — the id alone says who, the session + seq say when.
+    const generation = createConnection()
+    set({
+      status: "connecting",
+      attempt: 0,
+      lastError: null,
+      welcome: null,
+      connectionId: generation.connectionId,
+    })
     useSessionStore.getState().clear()
     useMediaStore.getState().reset()
     useAudioStore.getState().reset()
+    let failure: string | null = null
     try {
       await transportConnect({
         ...params,
         ticket: sanitizeTicket(params.ticket),
         key: params.key.trim(),
-        connectionId,
+        generation,
       })
     } catch (err) {
-      // A later explicit connect may already own the store. This invoke is
-      // stale; writing offline/null would kill generation B.
-      if (get().connectionId !== connectionId) return
-      set({ status: "offline", lastError: String(err), connectionId: null })
+      failure = String(err)
     }
+    // One guard over BOTH continuations: a later explicit connect may already
+    // own the store, and this invoke — seated or refused — speaks for a
+    // generation that is gone. Writing offline/null here would kill B.
+    if (get().connectionId !== generation.connectionId || failure === null) return
+    set({ status: "offline", lastError: failure, connectionId: null })
   },
 
   disconnect: async () => {
@@ -122,10 +133,14 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
     // newer connect is safe from this function's tail — do not add a
     // post-await set.
     const lastError = get().refused ? get().lastError : null
+    const connectionId = get().connectionId
     set({ connectionId: null, status: "offline", attempt: 0, welcome: null, lastError })
     if (!isTauri()) return
     try {
-      await transportDisconnect()
+      // Name the generation being dropped. The slot closes only its own
+      // occupant, so a disconnect a newer dial has already replaced cannot
+      // take that newer actor down with it.
+      await transportDisconnect(connectionId)
     } catch {
       // A failed disconnect only means there was nothing to disconnect.
     }
