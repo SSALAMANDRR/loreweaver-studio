@@ -306,6 +306,90 @@ describe("hostLocal store", () => {
     expect(connect).not.toHaveBeenCalled()
   })
 
+  it("stops the server a readiness error left running, instead of stranding Start", async () => {
+    // A readiness Error does NOT kill the child (`watch_output` emits it and
+    // leaves the drains alone), so flipping `phase` alone leaves a live server
+    // with an id the operator can no longer reach: Start lights up, the next
+    // press is refused with "a local server is already running", and on a first
+    // run there are no persisted credentials to sit back down with.
+    useHostLocalStore.setState({ phase: "starting", hostId: HOST })
+
+    useHostLocalStore.getState().ingest(ev({ kind: "error", message: "the server never announced a ticket" }))
+    await Promise.resolve()
+
+    const state = useHostLocalStore.getState()
+    expect(state.phase).toBe("error")
+    expect(state.error).toBe("the server never announced a ticket")
+    expect(bridge.hostLocalStop).toHaveBeenCalledTimes(1)
+    expect(state.hostId).toBeNull()
+    expect(state.stoppingHostId).toBe(HOST)
+
+    // …and the Exit that confirms the kill is a confirmation, not a crash.
+    useHostLocalStore.getState().ingest(ev({ kind: "exit", code: 1 }))
+    const settled = useHostLocalStore.getState()
+    expect(settled.error).toBe("the server never announced a ticket")
+    expect(settled.exitKind).toBeNull()
+    expect(settled.stoppingHostId).toBeNull()
+  })
+
+  it("does not let an abandoned start's rejection clobber the session that replaced it", async () => {
+    // Cancel leaves `phase: "idle"` while the stop is still in flight, so Start
+    // can be pressed again before the acquisition it cancelled has seated
+    // anything. The second press owns the store; the first press's invoke then
+    // loses the race in Rust and rejects with "a local server is already
+    // running" — a verdict about a start nobody is waiting for any more.
+    ;(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {}
+    try {
+      bridge.mintHostId.mockReturnValueOnce("host-A").mockReturnValueOnce("host-B")
+      let rejectA: (cause: Error) => void = () => {
+        throw new Error("rejectA not armed")
+      }
+      let settleStop: (stopped: boolean) => void = () => {
+        throw new Error("settleStop not armed")
+      }
+      bridge.hostLocalStart
+        .mockImplementationOnce(
+          () =>
+            new Promise<void>((_, reject) => {
+              rejectA = reject
+            }),
+        )
+        .mockImplementationOnce(async () => {})
+      bridge.hostLocalStop.mockImplementationOnce(
+        () =>
+          new Promise<boolean>((resolve) => {
+            settleStop = resolve
+          }),
+      )
+
+      const pendingA = useHostLocalStore.getState().start()
+      await vi.waitFor(() => expect(bridge.hostLocalStart).toHaveBeenCalledTimes(1))
+      expect(useHostLocalStore.getState().hostId).toBe("host-A")
+
+      const cancelled = useHostLocalStore.getState().stop()
+      expect(useHostLocalStore.getState().phase).toBe("idle")
+
+      const pendingB = useHostLocalStore.getState().start()
+      await vi.waitFor(() => expect(bridge.hostLocalStart).toHaveBeenCalledTimes(2))
+      expect(useHostLocalStore.getState().hostId).toBe("host-B")
+      expect(useHostLocalStore.getState().phase).toBe("starting")
+
+      settleStop(false)
+      await cancelled
+
+      rejectA(new Error("a local server is already running"))
+      await pendingA
+      await pendingB
+
+      const state = useHostLocalStore.getState()
+      expect(state.hostId).toBe("host-B")
+      expect(state.phase).toBe("starting")
+      expect(state.error).toBeNull()
+    } finally {
+      delete (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__
+    }
+  })
+
   it("drops a late Ready after Exit so a dead server cannot become ready again", () => {
     useConnectionStore.setState({ connect: vi.fn(async () => {}) } as never)
     useHostLocalStore.setState({

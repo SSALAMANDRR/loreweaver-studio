@@ -134,20 +134,44 @@ export const useHostLocalStore = create<HostLocalState>()(
           stoppingHostId: null,
           parkedReady: null,
         })
+        // Does this press still own the store? A cancel that is still in flight
+        // owns it too — it holds this id as `stoppingHostId` and may hand it
+        // back — but a LATER press has replaced us outright, and an abandoned
+        // start may neither seat a child nobody is listening for nor report a
+        // verdict about a session that is no longer on screen.
+        const owns = () => {
+          const state = get()
+          return state.hostId === hostId || state.stoppingHostId === hostId
+        }
+        let failure: string | null = null
         try {
           await subscribeOnce(get().ingest)
+          if (!owns()) return
           // Already serving? Then this press means "sit me back down", not "start one":
           // the Rust side would refuse, and refusing is the whole dead end.
           if (await get().reconnectIfServing()) return
+          if (!owns()) return
           await hostLocalStart(
             useAiStore.getState().engineRepoDir.trim() || undefined,
             get().homeOverride.trim() || undefined,
             devSourceRoot || undefined,
-            get().hostId ?? hostId,
+            hostId,
           )
         } catch (cause) {
-          set({ phase: "error", error: cause instanceof Error ? cause.message : String(cause) })
+          failure = cause instanceof Error ? cause.message : String(cause)
         }
+        // One guard over BOTH continuations: whatever this dial has to say, only
+        // the generation that still owns the store may say it.
+        if (!owns() || failure === null) return
+        // Nothing seated under this id — Rust either never spawned or killed
+        // its own leftover — so let the id go, and with it any cancel that is
+        // still waiting for a child this start will never deliver.
+        set((s) => ({
+          phase: "error",
+          error: failure,
+          hostId: null,
+          stoppingHostId: s.stoppingHostId === hostId ? null : s.stoppingHostId,
+        }))
       },
 
       reconnectIfServing: async () => {
@@ -287,7 +311,26 @@ export const useHostLocalStore = create<HostLocalState>()(
             })
             return
           case "error":
-            set({ phase: "error", error: event.message })
+            // A readiness failure does not kill anything: `watch_output` emits
+            // the Error and leaves the child and its drains exactly where they
+            // were. Flipping `phase` alone therefore strands a LIVE server
+            // under an id the screen has stopped showing — Start comes back,
+            // and the next press is refused with "a local server is already
+            // running" while a first run has no persisted credentials to sit
+            // back down with. Nobody can adopt a server that never announced a
+            // ticket, so answer the process question the only way left: stop
+            // it, keeping the id as the stopping one so the Exit that confirms
+            // the kill reads as a confirmation rather than a second failure.
+            set((s) => ({
+              phase: "error",
+              error: event.message,
+              hostedSession: false,
+              hostId: null,
+              stoppingHostId: s.hostId ?? s.stoppingHostId,
+            }))
+            void hostLocalStop().catch(() => {
+              // Nothing to stop is fine — the child may have died already.
+            })
             return
         }
       },
