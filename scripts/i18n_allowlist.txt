@@ -11,3 +11,6 @@
 # person; the CJK inside is the anti-pattern vocabulary the prompt bans by
 # example, which only means anything in the language it bans.
 src/features/studio/wizard/prompts.ts
+# node:path relative() uses backslashes on Windows; keep the Windows spelling
+# too until the linter normalizes repository paths before allowlist lookup.
+src\features\studio\wizard\prompts.ts
