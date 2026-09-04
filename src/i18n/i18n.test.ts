@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { detectLanguage } from "./index"
+import { detectLanguage, resources } from "./index"
 import en from "./locales/en.json"
 import zh from "./locales/zh.json"
 
@@ -40,12 +40,15 @@ describe("detectLanguage", () => {
 })
 
 describe("locale resources", () => {
-  it("en and zh declare exactly the same key set", () => {
+  const ru = resources.ru.translation
+
+  it("en, ru and zh declare exactly the same key set", () => {
     expect(keyPaths(zh).sort()).toEqual(keyPaths(en).sort())
+    expect(keyPaths(ru).sort()).toEqual(keyPaths(en).sort())
   })
 
   it("no locale value is empty", () => {
-    for (const locale of [en, zh]) {
+    for (const locale of [en, ru, zh]) {
       const leaves = keyPaths(locale)
       expect(leaves.length).toBeGreaterThan(0)
       const flat = JSON.stringify(locale)
