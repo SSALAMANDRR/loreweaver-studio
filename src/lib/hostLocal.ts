@@ -19,6 +19,40 @@ export type HostLocalEventKind =
 
 export type HostLocalEvent = { hostId: string } & HostLocalEventKind
 
+/**
+ * Tauri currently serializes the Rust enum's `host_id` field as snake_case:
+ * `rename_all = "camelCase"` on an enum renames variant names, not fields in
+ * struct variants. Older/newer backends may therefore send either spelling.
+ * Normalize once at the bridge so the store never silently drops every event
+ * and leaves the connect screen stuck on "starting" while the server is ready.
+ */
+export function normalizeHostLocalEvent(payload: unknown): HostLocalEvent | null {
+  if (typeof payload !== "object" || payload === null) return null
+  const raw = payload as Record<string, unknown>
+  const hostId =
+    typeof raw.hostId === "string"
+      ? raw.hostId
+      : typeof raw.host_id === "string"
+        ? raw.host_id
+        : ""
+  if (!hostId) return null
+
+  const kind = raw.kind
+  if (kind === "log" && typeof raw.level === "string" && typeof raw.text === "string") {
+    return { hostId, kind, level: raw.level, text: raw.text }
+  }
+  if (kind === "ready" && typeof raw.ticket === "string" && typeof raw.key === "string") {
+    return { hostId, kind, ticket: raw.ticket, key: raw.key }
+  }
+  if (kind === "exit" && (typeof raw.code === "number" || raw.code === null)) {
+    return { hostId, kind, code: raw.code }
+  }
+  if (kind === "error" && typeof raw.message === "string") {
+    return { hostId, kind, message: raw.message }
+  }
+  return null
+}
+
 export interface HostLocalStatus {
   running: boolean
   home: string
@@ -77,5 +111,8 @@ export async function hostLocalStatus(homeOverride?: string): Promise<HostLocalS
 }
 
 export function onHostLocalEvent(handler: (event: HostLocalEvent) => void): Promise<UnlistenFn> {
-  return listen<HostLocalEvent>(HOST_LOCAL_EVENT, (event) => handler(event.payload))
+  return listen<unknown>(HOST_LOCAL_EVENT, (event) => {
+    const normalized = normalizeHostLocalEvent(event.payload)
+    if (normalized !== null) handler(normalized)
+  })
 }
