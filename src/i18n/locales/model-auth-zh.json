@@ -1,0 +1,15 @@
+{
+  "demoActive": "当前运行的是内置离线守秘人。它不是 AI 模型：无法识别的行动会收到固定的兜底回复。要测试真实模型，请先在下方登录 ChatGPT。",
+  "subscriptionTitle": "ChatGPT 订阅",
+  "subscriptionReady": "此服务器已保存 ChatGPT 授权。",
+  "subscriptionActive": "当前守秘人由 ChatGPT 驱动。",
+  "subscriptionMissing": "此服务器尚未授权 ChatGPT。",
+  "subscriptionHint": "ChatGPT 订阅通过 OpenAI 设备码登录，不需要 API 密钥或 Base URL。",
+  "login": "登录 ChatGPT",
+  "loginPending": "正在等待浏览器确认…",
+  "loginOpen": "打开 OpenAI 登录页面",
+  "loginReply": "服务器登录说明：{{message}}",
+  "loginFailed": "登录请求未能发送。请检查连接后重试。",
+  "activate": "使用 ChatGPT",
+  "autoSwitchHint": "授权完成后，Studio 会自动把守秘人切换到 ChatGPT。"
+}
