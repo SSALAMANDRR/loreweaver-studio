@@ -20,6 +20,7 @@ describe("detectLanguage", () => {
   it("prefers a stored locale over the navigator", () => {
     expect(detectLanguage("zh", "en-US")).toBe("zh")
     expect(detectLanguage("en", "zh-CN")).toBe("en")
+    expect(detectLanguage("ru", "en-US")).toBe("ru")
   })
 
   it("treats a missing or non-string navigator.language as English", () => {
@@ -30,6 +31,11 @@ describe("detectLanguage", () => {
   it("maps a zh* navigator language to zh", () => {
     expect(detectLanguage(null, "zh-CN")).toBe("zh")
     expect(detectLanguage(null, "zh")).toBe("zh")
+  })
+
+  it("maps a ru* navigator language to ru", () => {
+    expect(detectLanguage(null, "ru-RU")).toBe("ru")
+    expect(detectLanguage(null, "ru")).toBe("ru")
   })
 })
 
@@ -43,12 +49,12 @@ describe("locale resources", () => {
       const leaves = keyPaths(locale)
       expect(leaves.length).toBeGreaterThan(0)
       const flat = JSON.stringify(locale)
-      expect(flat).not.toContain('""')
+      expect(flat).not.toContain('\"\"')
     }
   })
 
   it("every Issue key a reader can emit has a message under studio.pack.err", () => {
-    // Issue keys are looked up dynamically (`t(\`studio.pack.err.${issue.key}\`)`),
+    // Issue keys are looked up dynamically (`t(`studio.pack.err.${issue.key}`)`),
     // so the i18n lint — which reads literals at their call sites — cannot see
     // them, and a missing one renders as its own raw key in the panel. That is
     // how `rulepackInitiativeString` shipped with no message at all. This walks
