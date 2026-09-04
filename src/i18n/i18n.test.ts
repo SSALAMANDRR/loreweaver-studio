@@ -56,6 +56,12 @@ describe("locale resources", () => {
     }
   })
 
+  it("keeps generic roles system-neutral and localizes built-in skill metadata", () => {
+    expect(ru.play.menu.role.player).toBe("Игрок")
+    expect(ru.play.skills.builtins["image-gen"].name).toBe("Генерация изображений")
+    expect(ru.play.skills.ratings.explicit).toBe("откровенное")
+  })
+
   it("every Issue key a reader can emit has a message under studio.pack.err", () => {
     // Issue keys are looked up dynamically (`t(`studio.pack.err.${issue.key}`)`),
     // so the i18n lint — which reads literals at their call sites — cannot see
