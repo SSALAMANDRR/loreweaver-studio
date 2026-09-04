@@ -16,6 +16,16 @@ export default function SkillsScreen({ onBack }: { onBack: () => void }) {
     listSkills(i18n.language)
   }, [listSkills, i18n.language])
 
+  const localized = (id: string, field: "name" | "description", fallback: string): string => {
+    const key = `play.skills.builtins.${id}.${field}`
+    return i18n.exists(key) ? t(key) : fallback
+  }
+
+  const localizedRating = (rating: string): string => {
+    const key = `play.skills.ratings.${rating}`
+    return i18n.exists(key) ? t(key) : rating
+  }
+
   return (
     <ScreenShell title={t("play.menu.skills")} onBack={onBack} showAdminError>
       <ul className="play-list">
@@ -27,9 +37,13 @@ export default function SkillsScreen({ onBack }: { onBack: () => void }) {
                 checked={skill.enabled}
                 onChange={(e) => enableSkill(skill.id, e.target.checked, i18n.language)}
               />
-              <span className="play-skill-name">{skill.name}</span>
-              {skill.content_rating ? <span className="chip">{skill.content_rating}</span> : null}
-              <span className="play-skill-desc">{skill.description}</span>
+              <span className="play-skill-name">{localized(skill.id, "name", skill.name)}</span>
+              {skill.content_rating ? (
+                <span className="chip">{localizedRating(skill.content_rating)}</span>
+              ) : null}
+              <span className="play-skill-desc">
+                {localized(skill.id, "description", skill.description)}
+              </span>
             </label>
           </li>
         ))}
