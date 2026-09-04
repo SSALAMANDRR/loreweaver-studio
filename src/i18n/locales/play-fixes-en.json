@@ -1,0 +1,39 @@
+{
+  "rolePlayer": "Player",
+  "skills": {
+    "builtins": {
+      "image-gen": {
+        "name": "Image generation",
+        "description": "Enable to let the Keeper generate occasional player-visible scene, portrait, or item handouts through the configured external image provider."
+      },
+      "mature-mode": {
+        "name": "Mature mode",
+        "description": "Enable for a private, invite-only adult or romance campaign whose players have explicitly opted in. It lifts the Keeper's self-censorship for explicit romance or intimacy scenes and the room's adult user-written lore while it is on."
+      },
+      "module-forge": {
+        "name": "Module forge",
+        "description": "Enable to let the Keeper author a brand-new module or scenario from a natural-language description and install it into this room's module knowledge. Turn this on only when you want the Keeper itself to generate and install a new module at your request."
+      },
+      "romance-relationships": {
+        "name": "Romance & relationships",
+        "description": "Enable for a campaign centered on romance or intimacy: tracks attraction and tension, resolves seduction and reading feelings as social checks, and prompts consent beats before a scene turns intimate."
+      },
+      "rule-forge": {
+        "name": "Rule forge",
+        "description": "Enable to let the Keeper author a brand-new TTRPG rule system from a description of its sheet and checks. Turn this on only when you want the Keeper itself to generate and install a new rule system at your request."
+      },
+      "skill-forge": {
+        "name": "Skill forge",
+        "description": "Enable to let the Keeper author a brand-new KP skill from a natural-language description of a desired play-style. Turn this on only when you want the Keeper itself to generate and install new skills at your request."
+      },
+      "svg-mapmaker": {
+        "name": "SVG mapmaker",
+        "description": "Enable to let the Keeper draw simple player-visible SVG handout maps: location maps, room hierarchy diagrams, clue-route sketches, and relationship or area structures with labels."
+      }
+    },
+    "ratings": {
+      "explicit": "explicit",
+      "mature": "mature"
+    }
+  }
+}
