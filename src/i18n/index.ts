@@ -1,6 +1,9 @@
 import i18n from "i18next"
 import { initReactI18next } from "react-i18next"
 import en from "./locales/en.json"
+import modelAuthEn from "./locales/model-auth-en.json"
+import modelAuthRu from "./locales/model-auth-ru.json"
+import modelAuthZh from "./locales/model-auth-zh.json"
 import ru from "./locales/ru.json"
 import ruStudioAi from "./locales/ru-studio-ai.json"
 import ruStudioCore from "./locales/ru-studio-core.json"
@@ -12,8 +15,26 @@ import zh from "./locales/zh.json"
 
 const STORAGE_KEY = "lw-lang"
 
+const enMerged = {
+  ...en,
+  play: {
+    ...en.play,
+    model: {
+      ...en.play.model,
+      ...modelAuthEn,
+    },
+  },
+}
+
 const ruMerged = {
   ...ru,
+  play: {
+    ...ru.play,
+    model: {
+      ...ru.play.model,
+      ...modelAuthRu,
+    },
+  },
   studio: {
     ...ruStudioCore,
     wizard: ruStudioWizard,
@@ -24,10 +45,21 @@ const ruMerged = {
   },
 }
 
+const zhMerged = {
+  ...zh,
+  play: {
+    ...zh.play,
+    model: {
+      ...zh.play.model,
+      ...modelAuthZh,
+    },
+  },
+}
+
 export const resources = {
-  en: { translation: en },
+  en: { translation: enMerged },
   ru: { translation: ruMerged },
-  zh: { translation: zh },
+  zh: { translation: zhMerged },
 } as const
 
 /** Resolve the startup locale. `navigator.language` is optional — bun's test
