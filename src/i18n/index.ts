@@ -15,7 +15,6 @@ const STORAGE_KEY = "lw-lang"
 const ruMerged = {
   ...ru,
   studio: {
-    ...ru.studio,
     ...ruStudioCore,
     wizard: ruStudioWizard,
     split: ruStudioSplit,
