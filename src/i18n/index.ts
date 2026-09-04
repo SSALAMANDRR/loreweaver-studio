@@ -4,6 +4,9 @@ import en from "./locales/en.json"
 import modelAuthEn from "./locales/model-auth-en.json"
 import modelAuthRu from "./locales/model-auth-ru.json"
 import modelAuthZh from "./locales/model-auth-zh.json"
+import playFixesEn from "./locales/play-fixes-en.json"
+import playFixesRu from "./locales/play-fixes-ru.json"
+import playFixesZh from "./locales/play-fixes-zh.json"
 import ru from "./locales/ru.json"
 import ruStudioAi from "./locales/ru-studio-ai.json"
 import ruStudioCore from "./locales/ru-studio-core.json"
@@ -19,9 +22,20 @@ const enMerged = {
   ...en,
   play: {
     ...en.play,
+    menu: {
+      ...en.play.menu,
+      role: {
+        ...en.play.menu.role,
+        player: playFixesEn.rolePlayer,
+      },
+    },
     model: {
       ...en.play.model,
       ...modelAuthEn,
+    },
+    skills: {
+      ...en.play.skills,
+      ...playFixesEn.skills,
     },
   },
 }
@@ -30,9 +44,20 @@ const ruMerged = {
   ...ru,
   play: {
     ...ru.play,
+    menu: {
+      ...ru.play.menu,
+      role: {
+        ...ru.play.menu.role,
+        player: playFixesRu.rolePlayer,
+      },
+    },
     model: {
       ...ru.play.model,
       ...modelAuthRu,
+    },
+    skills: {
+      ...ru.play.skills,
+      ...playFixesRu.skills,
     },
   },
   studio: {
@@ -49,9 +74,20 @@ const zhMerged = {
   ...zh,
   play: {
     ...zh.play,
+    menu: {
+      ...zh.play.menu,
+      role: {
+        ...zh.play.menu.role,
+        player: playFixesZh.rolePlayer,
+      },
+    },
     model: {
       ...zh.play.model,
       ...modelAuthZh,
+    },
+    skills: {
+      ...zh.play.skills,
+      ...playFixesZh.skills,
     },
   },
 }
