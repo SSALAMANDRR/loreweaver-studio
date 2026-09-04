@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest"
 import { detectLanguage, resources } from "./index"
-import en from "./locales/en.json"
-import zh from "./locales/zh.json"
 
 /** Every studio source file, as text. Vite resolves this at transform time, so
  * the test needs no filesystem access of its own. */
@@ -40,7 +38,9 @@ describe("detectLanguage", () => {
 })
 
 describe("locale resources", () => {
+  const en = resources.en.translation
   const ru = resources.ru.translation
+  const zh = resources.zh.translation
 
   it("en, ru and zh declare exactly the same key set", () => {
     expect(keyPaths(zh).sort()).toEqual(keyPaths(en).sort())
