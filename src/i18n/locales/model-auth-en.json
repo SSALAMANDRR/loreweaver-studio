@@ -1,0 +1,15 @@
+{
+  "demoActive": "The built-in offline Keeper is running. It is not an AI model: unknown actions receive a fixed fallback reply. Sign in to ChatGPT below to test the real model.",
+  "subscriptionTitle": "ChatGPT subscription",
+  "subscriptionReady": "ChatGPT authorization is saved on this server.",
+  "subscriptionActive": "ChatGPT is currently driving the Keeper.",
+  "subscriptionMissing": "ChatGPT has not been authorized on this server yet.",
+  "subscriptionHint": "A ChatGPT subscription uses OpenAI device login. No API key or Base URL is required.",
+  "login": "Sign in with ChatGPT",
+  "loginPending": "Waiting for browser confirmation…",
+  "loginOpen": "Open the OpenAI login page",
+  "loginReply": "Server login instructions: {{message}}",
+  "loginFailed": "The login request could not be sent. Check the connection and try again.",
+  "activate": "Use ChatGPT",
+  "autoSwitchHint": "After authorization, Studio will switch the Keeper to ChatGPT automatically."
+}
