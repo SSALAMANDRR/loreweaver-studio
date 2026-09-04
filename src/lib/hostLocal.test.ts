@@ -1,9 +1,40 @@
 import { describe, expect, it } from "vitest"
-import { hostEventApplies, mintHostId, type HostLocalEvent, type HostLocalEventKind } from "./hostLocal"
+import {
+  hostEventApplies,
+  mintHostId,
+  normalizeHostLocalEvent,
+  type HostLocalEvent,
+  type HostLocalEventKind,
+} from "./hostLocal"
 
 function ev(hostId: string, rest: HostLocalEventKind): HostLocalEvent {
   return { hostId, ...rest }
 }
+
+describe("normalizeHostLocalEvent", () => {
+  it("accepts the camelCase shape the frontend expects", () => {
+    expect(normalizeHostLocalEvent({ hostId: "a", kind: "ready", ticket: "t", key: "k" })).toEqual({
+      hostId: "a",
+      kind: "ready",
+      ticket: "t",
+      key: "k",
+    })
+  })
+
+  it("accepts Rust's current snake_case host_id so Ready is not silently dropped", () => {
+    expect(normalizeHostLocalEvent({ host_id: "a", kind: "ready", ticket: "t", key: "k" })).toEqual({
+      hostId: "a",
+      kind: "ready",
+      ticket: "t",
+      key: "k",
+    })
+  })
+
+  it("rejects malformed bridge payloads", () => {
+    expect(normalizeHostLocalEvent({ kind: "ready", ticket: "t", key: "k" })).toBeNull()
+    expect(normalizeHostLocalEvent({ host_id: "a", kind: "ready", ticket: 1, key: "k" })).toBeNull()
+  })
+})
 
 describe("hostEventApplies", () => {
   it("accepts every kind for the current hostId", () => {
