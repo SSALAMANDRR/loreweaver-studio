@@ -2,7 +2,12 @@ import i18n from "i18next"
 import { initReactI18next } from "react-i18next"
 import en from "./locales/en.json"
 import ru from "./locales/ru.json"
+import ruStudioAi from "./locales/ru-studio-ai.json"
 import ruStudioCore from "./locales/ru-studio-core.json"
+import ruStudioMisc from "./locales/ru-studio-misc.json"
+import ruStudioPack from "./locales/ru-studio-pack.json"
+import ruStudioSplit from "./locales/ru-studio-split.json"
+import ruStudioWizard from "./locales/ru-studio-wizard.json"
 import zh from "./locales/zh.json"
 
 const STORAGE_KEY = "lw-lang"
@@ -12,6 +17,11 @@ const ruMerged = {
   studio: {
     ...ru.studio,
     ...ruStudioCore,
+    wizard: ruStudioWizard,
+    split: ruStudioSplit,
+    ai: ruStudioAi,
+    pack: ruStudioPack,
+    ...ruStudioMisc,
   },
 }
 
