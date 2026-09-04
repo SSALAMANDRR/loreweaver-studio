@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { UiManifestPanel, WelcomeFrame } from "@loreweaver/protocol"
 import "../../i18n"
 import { useConnectionStore } from "../../store/connection"
+import { useHostLocalStore } from "../../store/hostLocal"
 import { usePanelsStore } from "../../store/panels"
 import { useSessionStore } from "../../store/session"
 import PlayView from "./PlayView"
@@ -27,6 +28,7 @@ const MODAL: UiManifestPanel = {
 
 function reset() {
   useConnectionStore.setState({ status: "offline", attempt: 0, lastError: null, welcome: null })
+  useHostLocalStore.setState({ phase: "idle", error: null, exitKind: null, exitCode: null })
   useSessionStore.getState().clear()
 }
 
@@ -104,6 +106,14 @@ describe("PlayView", () => {
     // jsdom is not the Tauri shell, so the button is present but disabled.
     expect(button).toBeDisabled()
     expect(screen.getByText(/needs the desktop app/)).toBeInTheDocument()
+  })
+
+  it("hides manual ticket/key entry while one-click local hosting owns the connection", () => {
+    useHostLocalStore.setState({ phase: "starting" })
+    render(<PlayView />)
+    expect(screen.queryByRole("button", { name: "Connect" })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/server ticket/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/access key/i)).not.toBeInTheDocument()
   })
 
   it("surfaces transport errors on the connect form", () => {
