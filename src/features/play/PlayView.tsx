@@ -157,6 +157,7 @@ export default function PlayView() {
   const status = useConnectionStore((s) => s.status)
   const lastError = useConnectionStore((s) => s.lastError)
   const connect = useConnectionStore((s) => s.connect)
+  const localPhase = useHostLocalStore((s) => s.phase)
 
   const [ticket, setTicket] = useState("")
   const [key, setKey] = useState("")
@@ -170,6 +171,11 @@ export default function PlayView() {
 
   const offline = status === "offline"
   const canSubmit = offline && ticket.trim().length > 0 && key.trim().length > 0
+  // A local start owns its ticket/key exchange. Hide the remote/manual form
+  // while that path is active so the UI does not imply that the keeper must
+  // copy credentials out of sidecar files. If auto-connect itself fails, the
+  // connection error restores the manual escape hatch.
+  const localAutoConnect = localPhase === "starting" || (localPhase === "ready" && !lastError)
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -191,41 +197,43 @@ export default function PlayView() {
 
         <HostLocalBlock />
 
-        <form className="connect-form" onSubmit={onSubmit}>
-          <label>
-            {t("connect.ticket")}
-            <textarea
-              value={ticket}
-              onChange={(e) => setTicket(e.target.value)}
-              placeholder={t("connect.ticketPlaceholder")}
-              rows={3}
-              spellCheck={false}
-              disabled={!offline}
-            />
-          </label>
-          <label>
-            {t("connect.key")}
-            <input
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              placeholder={t("connect.keyPlaceholder")}
-              spellCheck={false}
-              disabled={!offline}
-            />
-          </label>
-          <label>
-            {t("connect.name")}
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t("connect.namePlaceholder")}
-              disabled={!offline}
-            />
-          </label>
-          <button type="submit" disabled={!canSubmit}>
-            {t("connect.submit")}
-          </button>
-        </form>
+        {!localAutoConnect ? (
+          <form className="connect-form" onSubmit={onSubmit}>
+            <label>
+              {t("connect.ticket")}
+              <textarea
+                value={ticket}
+                onChange={(e) => setTicket(e.target.value)}
+                placeholder={t("connect.ticketPlaceholder")}
+                rows={3}
+                spellCheck={false}
+                disabled={!offline}
+              />
+            </label>
+            <label>
+              {t("connect.key")}
+              <input
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+                placeholder={t("connect.keyPlaceholder")}
+                spellCheck={false}
+                disabled={!offline}
+              />
+            </label>
+            <label>
+              {t("connect.name")}
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t("connect.namePlaceholder")}
+                disabled={!offline}
+              />
+            </label>
+            <button type="submit" disabled={!canSubmit}>
+              {t("connect.submit")}
+            </button>
+          </form>
+        ) : null}
 
         {lastError ? (
           <p className="connect-error" role="alert">
