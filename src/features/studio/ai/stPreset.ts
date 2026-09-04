@@ -7,7 +7,7 @@
 // every prompt keeps its original object in `raw`, and entries too broken to
 // normalize are preserved verbatim in `malformedPrompts`.
 
-import { z } from "zod"
+import * as z from "zod"
 import type { LlmSamplingParams } from "../../../lib/native"
 
 // --- marker slots -----------------------------------------------------------
