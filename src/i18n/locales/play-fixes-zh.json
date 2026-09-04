@@ -1,0 +1,39 @@
+{
+  "rolePlayer": "玩家",
+  "skills": {
+    "builtins": {
+      "image-gen": {
+        "name": "图像生成",
+        "description": "允许 Keeper 通过已配置的外部图像服务，偶尔生成玩家可见的场景、肖像或物品插图。"
+      },
+      "mature-mode": {
+        "name": "成人模式",
+        "description": "用于仅限受邀、且所有玩家均明确同意的成人或恋爱主题战役。开启后会放宽 Keeper 对露骨浪漫、亲密场景以及房间中成人向用户内容的自我限制。"
+      },
+      "module-forge": {
+        "name": "模组锻造",
+        "description": "允许 Keeper 根据自然语言描述创建全新的模组或场景，并直接安装到本房间的模组知识中。仅在你希望 Keeper 按请求自行生成并安装新模组时开启。"
+      },
+      "romance-relationships": {
+        "name": "浪漫与关系",
+        "description": "用于以浪漫或亲密关系为主题的战役：追踪吸引力与张力，将诱惑和解读情感作为社交检定处理，并在场景转向亲密前提示确认同意。"
+      },
+      "rule-forge": {
+        "name": "规则锻造",
+        "description": "允许 Keeper 根据角色表与检定方式的描述创建全新的 TRPG 规则系统。仅在你希望 Keeper 自行生成并安装新规则系统时开启。"
+      },
+      "skill-forge": {
+        "name": "Keeper 技能锻造",
+        "description": "允许 Keeper 根据期望的游戏风格描述创建全新的 KP 技能。仅在你希望 Keeper 按请求自行生成并安装新技能时开启。"
+      },
+      "svg-mapmaker": {
+        "name": "SVG 地图绘制",
+        "description": "允许 Keeper 绘制简单、玩家可见的 SVG 地图和手册：地点地图、房间结构图、线索路线草图以及带标签的关系或区域结构图。"
+      }
+    },
+    "ratings": {
+      "explicit": "露骨",
+      "mature": "成人"
+    }
+  }
+}
