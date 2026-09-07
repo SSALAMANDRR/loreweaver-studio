@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react"
+import { act, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import "../../i18n"
@@ -64,5 +64,26 @@ describe("ManualRollCard", () => {
 
     act(() => useManualRollStore.getState().ingest({ type: "roll_cancel", request_id: "req-17" }))
     expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument()
+    // The live request already satisfied this online generation; its normal
+    // cancellation must not provoke a redundant reconnect-refresh query.
+    expect(transportSend).not.toHaveBeenCalled()
+  })
+
+  it("asks once per online generation for a persisted request when the transient store is empty", async () => {
+    render(<ManualRollCard />)
+
+    await waitFor(() =>
+      expect(transportSend).toHaveBeenCalledWith({ type: "input", text: ".__roll_pending" }),
+    )
+    expect(transportSend).toHaveBeenCalledTimes(1)
+
+    act(() => useConnectionStore.setState({ status: "reconnecting" }))
+    act(() => useConnectionStore.setState({ status: "online" }))
+
+    await waitFor(() => expect(transportSend).toHaveBeenCalledTimes(2))
+    expect(vi.mocked(transportSend).mock.calls[1]?.[0]).toEqual({
+      type: "input",
+      text: ".__roll_pending",
+    })
   })
 })
