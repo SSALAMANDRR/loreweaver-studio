@@ -1,6 +1,9 @@
 import i18n from "i18next"
 import { initReactI18next } from "react-i18next"
 import en from "./locales/en.json"
+import manualRollEn from "./locales/manual-roll-en.json"
+import manualRollRu from "./locales/manual-roll-ru.json"
+import manualRollZh from "./locales/manual-roll-zh.json"
 import modelAuthEn from "./locales/model-auth-en.json"
 import modelAuthRu from "./locales/model-auth-ru.json"
 import modelAuthZh from "./locales/model-auth-zh.json"
@@ -20,6 +23,7 @@ const STORAGE_KEY = "lw-lang"
 
 const enMerged = {
   ...en,
+  manualRoll: manualRollEn,
   play: {
     ...en.play,
     menu: {
@@ -42,6 +46,7 @@ const enMerged = {
 
 const ruMerged = {
   ...ru,
+  manualRoll: manualRollRu,
   play: {
     ...ru.play,
     menu: {
@@ -72,6 +77,7 @@ const ruMerged = {
 
 const zhMerged = {
   ...zh,
+  manualRoll: manualRollZh,
   play: {
     ...zh.play,
     menu: {
