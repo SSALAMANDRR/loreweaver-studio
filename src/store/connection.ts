@@ -12,6 +12,7 @@ import {
 } from "../lib/transport"
 import { useAdminStore } from "./admin"
 import { useAudioStore } from "./audio"
+import { isManualRollServerFrame, useManualRollStore } from "./manualRoll"
 import { useMediaStore } from "./media"
 import { useSessionStore } from "./session"
 
@@ -102,6 +103,7 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
       connectionId: generation.connectionId,
     })
     useSessionStore.getState().clear()
+    useManualRollStore.getState().clear()
     useMediaStore.getState().reset()
     useAudioStore.getState().reset()
     let failure: string | null = null
@@ -135,6 +137,7 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
     const lastError = get().refused ? get().lastError : null
     const connectionId = get().connectionId
     set({ connectionId: null, status: "offline", attempt: 0, welcome: null, lastError })
+    useManualRollStore.getState().clear()
     if (!isTauri()) return
     try {
       // Name the generation being dropped. The slot closes only its own
@@ -167,6 +170,14 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
       return
     }
     const frame = event.frame
+    // Manual physical-dice frames are the additive extension currently shipped
+    // by our DH2 branch before the shared npm protocol package publishes the
+    // matching minor. Keep this guard narrow: it validates the exact fields and
+    // sends only those two semantic frames to the dedicated transient store.
+    if (isManualRollServerFrame(frame)) {
+      useManualRollStore.getState().ingest(frame)
+      return
+    }
     // Belt and braces: the shared validator drops malformed frames so no
     // downstream consumer can crash on a missing field. A malformed WELCOME is
     // not droppable, though: the bridge has already marked the session settled
@@ -191,6 +202,13 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
         return
       }
       set({ welcome: frame })
+      return
+    }
+    // A physical-dice submit is transported through the existing hidden command
+    // lane until the shared protocol package publishes roll_submit. The server
+    // echoes matched commands to their author; this service command is UI plumbing,
+    // not chronicle content, so consume that one echo here.
+    if (frame.type === "narrative" && frame.speaker === "player" && frame.text.startsWith(".__roll_submit ")) {
       return
     }
     // Keeper-admin replies feed the admin store; they never reach the chronicle.
