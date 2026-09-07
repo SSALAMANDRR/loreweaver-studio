@@ -9,6 +9,7 @@ import { stripControlChars } from "@loreweaver/protocol"
 import { transportSend } from "../../../lib/transport"
 import { useConnectionStore } from "../../../store/connection"
 import { useSessionStore } from "../../../store/session"
+import CharacterContextSetup from "../CharacterContextSetup"
 import CreationWizard from "../CreationWizard"
 import { creationSystems, currentCreation, startCreationAction } from "../creation"
 import { ResourceRow } from "../StatePanel"
@@ -285,6 +286,9 @@ export default function CharacterScreen({ onBack }: { onBack: () => void }) {
             <CreationWizard creation={creation} />
           ) : (
             <>
+              {creation?.context && !creation.context.complete ? (
+                <CharacterContextSetup context={creation.context} />
+              ) : null}
               {character.status_effects.length > 0 ? (
                 <div className="chip-row">
                   {character.status_effects.map((effect) => (
