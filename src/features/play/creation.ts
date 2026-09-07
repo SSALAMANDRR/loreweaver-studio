@@ -1,5 +1,12 @@
 import type { RuleSystemEntry, StateFrame } from "@loreweaver/protocol"
 
+export interface CreationPresentation {
+  title?: string
+  description?: string
+  choice?: string
+  effect?: string
+}
+
 export interface CreationProfile {
   id: string
   label: string
@@ -9,6 +16,7 @@ export interface CreationCatalog {
   staged: boolean
   requires_profile: boolean
   profiles: CreationProfile[]
+  presentation?: CreationPresentation
 }
 
 export interface CreationChoiceOption {
@@ -48,9 +56,11 @@ export interface CreationDuplicateRequirement {
 
 export interface CreationAdvancementPurchase {
   category: string
+  category_label?: string
   target: string
   label: string
   stage: string
+  stage_label?: string
   current: number
   next: number
   cost: number
@@ -90,6 +100,7 @@ export interface CharacterContextState {
 export interface CreationStage {
   id: string
   kind: "profile_reroll" | "layer" | "duplicates" | "advancement" | "starting_equipment" | string
+  presentation?: CreationPresentation
   can_skip?: boolean
   targets?: CreationRerollTarget[]
   layer?: string
