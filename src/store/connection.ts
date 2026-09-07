@@ -76,9 +76,6 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
   refused: false,
 
   connect: async (params) => {
-    // An explicit dial is the one thing that lifts a refusal — do it before any
-    // early return, so a refused handshake cannot leave the store deaf to every
-    // status that follows for the rest of the process's life.
     set({ refused: false })
     if (!isTauri()) {
       set({
@@ -88,12 +85,6 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
       })
       return
     }
-    // Mint the new generation BEFORE clear() and BEFORE the invoke returns.
-    // Events already queued from the previous actor carry the old id and
-    // must not refill the session we are about to wipe; events from the new
-    // actor may arrive before `transportConnect` resolves. The generation also
-    // travels to Rust, which seats an actor only for a dial the WebView has
-    // not already outrun — the id alone says who, the session + seq say when.
     const generation = createConnection()
     set({
       status: "connecting",
@@ -117,32 +108,17 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
     } catch (err) {
       failure = String(err)
     }
-    // One guard over BOTH continuations: a later explicit connect may already
-    // own the store, and this invoke — seated or refused — speaks for a
-    // generation that is gone. Writing offline/null here would kill B.
     if (get().connectionId !== generation.connectionId || failure === null) return
     set({ status: "offline", lastError: failure, connectionId: null })
   },
 
   disconnect: async () => {
-    // Invalidate FIRST. The dying actor still emits Offline (and maybe a
-    // last Frame); those events may already be in the JS queue. Clearing
-    // the generation here is what stops them writing the previous room
-    // back after the caller has moved on. Status is set locally because
-    // the Offline event itself will now be dropped.
-    //
-    // The invoke below writes nothing when it settles, so a concurrent
-    // newer connect is safe from this function's tail — do not add a
-    // post-await set.
     const lastError = get().refused ? get().lastError : null
     const connectionId = get().connectionId
     set({ connectionId: null, status: "offline", attempt: 0, welcome: null, lastError })
     useManualRollStore.getState().clear()
     if (!isTauri()) return
     try {
-      // Name the generation being dropped. The slot closes only its own
-      // occupant, so a disconnect a newer dial has already replaced cannot
-      // take that newer actor down with it.
       await transportDisconnect(connectionId)
     } catch {
       // A failed disconnect only means there was nothing to disconnect.
@@ -150,16 +126,8 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
   },
 
   handleEvent: (event) => {
-    // The single chokepoint for a stale generation. A Rust-side check
-    // before emit cannot see an event that has already crossed the bridge.
     if (event.connectionId !== get().connectionId) return
     if (event.kind === "status") {
-      // A refusal outranks every status that follows it. The bridge emits the
-      // welcome frame and `online` back-to-back (`client.rs`: `settled = true`
-      // then `status(Online)`), so a refusal decided on the frame would be
-      // undone one event later by a status already in flight — the app would
-      // flicker into a room-less play screen and then bounce back to the form
-      // with no reason showing. The latch holds until the operator dials again.
       if (get().refused) return
       set((state) => ({
         status: event.status,
@@ -170,32 +138,15 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
       return
     }
     const frame = event.frame
-    // Manual physical-dice frames are the additive extension currently shipped
-    // by our DH2 branch before the shared npm protocol package publishes the
-    // matching minor. Keep this guard narrow: it validates the exact fields and
-    // sends only those two semantic frames to the dedicated transient store.
     if (isManualRollServerFrame(frame)) {
       useManualRollStore.getState().ingest(frame)
       return
     }
-    // Belt and braces: the shared validator drops malformed frames so no
-    // downstream consumer can crash on a missing field. A malformed WELCOME is
-    // not droppable, though: the bridge has already marked the session settled
-    // (which disarms its join deadline) and announced `online`, so staying
-    // quiet would leave the app online with no room and nothing to show for it.
     if (!isServerFrame(frame)) {
       if (looksLikeWelcome(frame)) refuse(set, get, i18n.t("connect.welcomeUnreadable"))
       return
     }
     if (frame.type === "welcome") {
-      // The MAJOR version is the compatibility contract, and the shared package ships
-      // the predicate so no client has to write it. A client that keeps talking to a
-      // different-major server misreads frames rather than failing, which is much
-      // harder to diagnose than a refusal — and with no backward compatibility promised
-      // before adoption, a stale client WILL meet a server that moved. So: refuse, name
-      // both versions, and drop the connection instead of letting the Rust bridge
-      // reconnect into the same wall. (The library only warns; refusing is the app's
-      // call, and this is the app.)
       const mismatch = protocolMismatch(frame.protocol)
       if (mismatch) {
         refuse(set, get, i18n.t("connect.protocolMismatch", { ...mismatch }))
@@ -204,22 +155,18 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
       set({ welcome: frame })
       return
     }
-    // Manual-roll plumbing is carried through hidden commands until the shared
-    // protocol package publishes a first-class lane. The server echoes matched
-    // commands to their author; neither submit nor reconnect-refresh belongs in
-    // the chronicle, so consume those service echoes here.
+    // Rich-client plumbing still rides the normal hidden command lane. The engine
+    // echoes matched commands to the sender, but service verbs are not table history.
     if (
       frame.type === "narrative" &&
       frame.speaker === "player" &&
-      (frame.text.startsWith(".__roll_submit ") || frame.text === ".__roll_pending")
+      (frame.text.startsWith(".__roll_submit ") ||
+        frame.text === ".__roll_pending" ||
+        frame.text.startsWith(".__creation_action "))
     ) {
       return
     }
-    // Keeper-admin replies feed the admin store; they never reach the chronicle.
     if (useAdminStore.getState().ingest(frame)) return
-    // The media and audio families are room furniture, not chronicle lines:
-    // pictures and library entries land in their own index beside the log, and
-    // playback intent drives the mixer.
     if (useMediaStore.getState().ingest(frame)) return
     if (useAudioStore.getState().ingest(frame)) return
     useSessionStore.getState().ingest(frame)
