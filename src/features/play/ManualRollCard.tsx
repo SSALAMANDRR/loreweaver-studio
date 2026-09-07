@@ -11,12 +11,14 @@ export default function ManualRollCard() {
   const [faces, setFaces] = useState<string[]>([])
   const [sending, setSending] = useState(false)
   const [sendFailed, setSendFailed] = useState(false)
+  const pendingRequestId = pending?.request_id
+  const pendingCount = pending?.count ?? 0
 
   useEffect(() => {
-    setFaces(pending ? Array.from({ length: pending.count }, () => "") : [])
+    setFaces(Array.from({ length: pendingCount }, () => ""))
     setSending(false)
     setSendFailed(false)
-  }, [pending?.request_id, pending?.count])
+  }, [pendingRequestId, pendingCount])
 
   if (!pending) return null
 
