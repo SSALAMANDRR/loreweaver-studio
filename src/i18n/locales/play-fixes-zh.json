@@ -1,5 +1,10 @@
 {
   "rolePlayer": "玩家",
+  "character": {
+    "profile": "创建档案（如系统要求）",
+    "profilePlaceholder": "档案 ID 或名称",
+    "profileHint": "有些规则系统要求在角色名之前指定创建档案。不需要时请留空。"
+  },
   "skills": {
     "builtins": {
       "image-gen": {
