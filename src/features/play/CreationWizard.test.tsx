@@ -24,13 +24,21 @@ function advancementCreation(available: number): CreationState {
     stage: {
       id: "advancement",
       kind: "advancement",
+      presentation: {
+        title: "Стартовый опыт",
+        description: "Потратьте стартовые 1000 XP на развитие персонажа.",
+        choice: "Купите нужные улучшения и завершите этап, когда будете готовы.",
+        effect: "Неистраченный опыт сохраняется.",
+      },
       budget: { starting: 1000, available, spent: 1000 - available },
       purchases: [
         {
           category: "characteristic",
+          category_label: "Характеристика",
           target: "WS",
-          label: "WS",
+          label: "Навык Рукопашной",
           stage: "simple",
+          stage_label: "Простое",
           current: 30,
           next: 35,
           cost: 250,
@@ -51,11 +59,23 @@ describe("CreationWizard advancement stage", () => {
     useConnectionStore.setState({ status: "online" })
   })
 
+  it("renders pack-authored guidance and localized advancement labels", () => {
+    render(<CreationWizard creation={advancementCreation(1000)} />)
+
+    expect(screen.getByText("Стартовый опыт")).toBeInTheDocument()
+    expect(screen.getByText(/Потратьте стартовые 1000 XP/)).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /Навык Рукопашной.*Простое.*30.*35.*250 XP/ }),
+    ).toBeEnabled()
+  })
+
   it("enables a purchase when its cost fits the current server budget", async () => {
     const user = userEvent.setup()
     render(<CreationWizard creation={advancementCreation(1000)} />)
 
-    const purchase = screen.getByRole("button", { name: /WS.*simple.*250 XP/ })
+    const purchase = screen.getByRole("button", {
+      name: /Навык Рукопашной.*Простое.*30.*35.*250 XP/,
+    })
     expect(purchase).toBeEnabled()
 
     await user.click(purchase)
@@ -69,6 +89,8 @@ describe("CreationWizard advancement stage", () => {
   it("disables a purchase whose cost exceeds the current budget", () => {
     render(<CreationWizard creation={advancementCreation(100)} />)
 
-    expect(screen.getByRole("button", { name: /WS.*simple.*250 XP/ })).toBeDisabled()
+    expect(
+      screen.getByRole("button", { name: /Навык Рукопашной.*Простое.*30.*35.*250 XP/ }),
+    ).toBeDisabled()
   })
 })
