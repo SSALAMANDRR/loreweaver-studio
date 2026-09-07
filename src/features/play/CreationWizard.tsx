@@ -8,7 +8,6 @@ import {
   duplicateAction,
   layerAction,
   type CreationChoiceGroup,
-  type CreationLayerOption,
   type CreationState,
 } from "./creation"
 
