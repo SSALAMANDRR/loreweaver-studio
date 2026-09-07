@@ -8,6 +8,7 @@ import {
   duplicateAction,
   layerAction,
   type CreationChoiceGroup,
+  type CreationPresentation,
   type CreationState,
 } from "./creation"
 
@@ -15,6 +16,20 @@ function send(text: string): void {
   void transportSend({ type: "input", text }).catch(() => {
     // Transport status owns visible delivery failures.
   })
+}
+
+function StageGuide({ presentation }: { presentation?: CreationPresentation }) {
+  if (!presentation) return null
+  const { title, description, choice, effect } = presentation
+  if (!title && !description && !choice && !effect) return null
+  return (
+    <div className="play-form">
+      {title ? <h4>{title}</h4> : null}
+      {description ? <p className="studio-hint">{description}</p> : null}
+      {choice ? <p className="studio-hint">{choice}</p> : null}
+      {effect ? <p className="studio-hint">{effect}</p> : null}
+    </div>
+  )
 }
 
 function groupValue(
@@ -222,9 +237,13 @@ export default function CreationWizard({ creation }: { creation: CreationState }
         </span>
       </div>
 
+      <StageGuide presentation={stage.presentation} />
+
       {stage.kind === "profile_reroll" ? (
         <div className="play-form">
-          <p className="studio-hint">{t("play.character.creation.rerollHint")}</p>
+          {!stage.presentation?.description ? (
+            <p className="studio-hint">{t("play.character.creation.rerollHint")}</p>
+          ) : null}
           <div className="chip-row">
             {(stage.targets ?? []).map((target) => (
               <button
@@ -260,6 +279,14 @@ export default function CreationWizard({ creation }: { creation: CreationState }
               spent: stage.budget?.spent ?? 0,
             })}
           </p>
+          <button
+            type="button"
+            className="primary-button"
+            disabled={!online}
+            onClick={() => send(creationStepAction("done"))}
+          >
+            {t("play.character.creation.finishXp")}
+          </button>
           <div className="play-form">
             {(stage.purchases ?? []).map((purchase) => (
               <button
@@ -269,18 +296,10 @@ export default function CreationWizard({ creation }: { creation: CreationState }
                 disabled={!online || purchase.cost > (stage.budget?.available ?? 0)}
                 onClick={() => send(advancementAction(purchase.category, purchase.target))}
               >
-                {purchase.label} · {purchase.stage} · {purchase.cost} XP
+                {purchase.label} · {purchase.stage_label ?? purchase.stage} · {purchase.current} → {purchase.next} · {purchase.cost} XP
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            className="primary-button"
-            disabled={!online}
-            onClick={() => send(creationStepAction("done"))}
-          >
-            {t("play.character.creation.finishXp")}
-          </button>
         </div>
       ) : null}
 
