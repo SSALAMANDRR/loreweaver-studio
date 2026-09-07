@@ -12,9 +12,12 @@
 // second rule engine in a client and lock every community pack's own system out
 // of this screen until the studio shipped a release.
 //
-// The one creation mode NOT offered is manual point-buy, for the same reason:
-// its budgets and ranges live in a pack's `creation_constraints` and no frame
-// carries them. Rolling, describing and importing all resolve server-side.
+// Profiled creation is still server-owned. Protocol 2.3 does not advertise a
+// pack's profile list, so roll mode exposes one optional free-form profile field
+// and sends the generic `<profile> | <name>` surface when it is filled. The
+// server resolves ids/aliases and rejects a profile a pack does not understand.
+// Manual point-buy is NOT offered for the same reason: its budgets and ranges
+// live in a pack's `creation_constraints` and no frame carries them.
 
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -60,6 +63,7 @@ function CreateCharacter() {
   const creatable = systems.filter((entry) => entry.make_char)
   const [mode, setMode] = useState<CreateMode>("roll")
   const [system, setSystem] = useState("")
+  const [profile, setProfile] = useState("")
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [path, setPath] = useState("")
@@ -82,6 +86,12 @@ function CreateCharacter() {
     const trimmedName = name.trim()
     if (mode === "roll") {
       if (!makeCharWord) return ""
+      const trimmedProfile = profile.trim()
+      if (trimmedProfile) {
+        return trimmedName
+          ? `.${makeCharWord} ${trimmedProfile} | ${trimmedName}`
+          : `.${makeCharWord} ${trimmedProfile}`
+      }
       return trimmedName ? `.${makeCharWord} ${trimmedName}` : `.${makeCharWord}`
     }
     if (mode === "describe") {
@@ -117,7 +127,10 @@ function CreateCharacter() {
             key={value}
             type="button"
             className={value === mode ? "primary-button" : "ghost-button"}
-            onClick={() => setMode(value)}
+            onClick={() => {
+              setMode(value)
+              if (value !== "roll") setProfile("")
+            }}
           >
             {t(`play.character.mode.${value}`)}
           </button>
@@ -127,7 +140,13 @@ function CreateCharacter() {
 
       <label className="field">
         {t("play.character.system")}
-        <select value={chosen} onChange={(e) => setSystem(e.target.value)}>
+        <select
+          value={chosen}
+          onChange={(e) => {
+            setSystem(e.target.value)
+            setProfile("")
+          }}
+        >
           {offered.map((entry) => (
             <option key={entry.id} value={entry.id}>
               {stripControlChars(entry.id)}
@@ -135,6 +154,19 @@ function CreateCharacter() {
           ))}
         </select>
       </label>
+
+      {mode === "roll" ? (
+        <label className="field">
+          {t("play.character.profile")}
+          <input
+            value={profile}
+            onChange={(e) => setProfile(e.target.value)}
+            placeholder={t("play.character.profilePlaceholder")}
+            spellCheck={false}
+          />
+          <span className="studio-hint">{t("play.character.profileHint")}</span>
+        </label>
+      ) : null}
 
       {mode === "import" ? (
         <label className="field">
