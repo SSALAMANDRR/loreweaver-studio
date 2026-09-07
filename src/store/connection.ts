@@ -204,11 +204,15 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
       set({ welcome: frame })
       return
     }
-    // A physical-dice submit is transported through the existing hidden command
-    // lane until the shared protocol package publishes roll_submit. The server
-    // echoes matched commands to their author; this service command is UI plumbing,
-    // not chronicle content, so consume that one echo here.
-    if (frame.type === "narrative" && frame.speaker === "player" && frame.text.startsWith(".__roll_submit ")) {
+    // Manual-roll plumbing is carried through hidden commands until the shared
+    // protocol package publishes a first-class lane. The server echoes matched
+    // commands to their author; neither submit nor reconnect-refresh belongs in
+    // the chronicle, so consume those service echoes here.
+    if (
+      frame.type === "narrative" &&
+      frame.speaker === "player" &&
+      (frame.text.startsWith(".__roll_submit ") || frame.text === ".__roll_pending")
+    ) {
       return
     }
     // Keeper-admin replies feed the admin store; they never reach the chronicle.
