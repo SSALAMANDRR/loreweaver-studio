@@ -3,7 +3,22 @@
   "character": {
     "profile": "创建档案（如系统要求）",
     "profilePlaceholder": "档案 ID 或名称",
-    "profileHint": "有些规则系统要求在角色名之前指定创建档案。不需要时请留空。"
+    "profileHint": "有些规则系统要求在角色名之前指定创建档案。不需要时请留空。",
+    "creation": {
+      "progress": "角色创建：第 {{current}} / {{total}} 步",
+      "option": "选择一个选项",
+      "choose": "请选择…",
+      "specialization": "专精",
+      "apply": "应用选择",
+      "replacement": "替换 {{index}}",
+      "rerollHint": "你可以重掷一个属性。第二次结果为最终结果。",
+      "keep": "保留这些属性",
+      "xp": "可用 XP：{{available}} · 已花费：{{spent}}",
+      "finishXp": "完成成长",
+      "equipmentRemaining": "剩余初始装备选择：{{remaining}}",
+      "complete": "角色创建已完成。",
+      "unsupportedStage": "当前 Studio 版本尚不能显示此创建步骤。"
+    }
   },
   "skills": {
     "builtins": {
