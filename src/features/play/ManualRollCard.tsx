@@ -24,19 +24,23 @@ export default function ManualRollCard() {
   // The engine persists a pending physical roll in room state, while this store is
   // intentionally transient and is cleared when a connection is replaced. Ask once
   // per online generation for the persisted request. This also covers mounting the
-  // play screen after the join has already settled. Keep the one-shot latch set after
-  // a normal roll completes so roll_cancel -> pending=null does not immediately issue
-  // a pointless second query; reconnecting resets it for the next generation.
+  // play screen after the join has already settled. Seeing a live request marks this
+  // generation as satisfied too, so its later roll_cancel does not trigger a useless
+  // refresh; reconnecting resets the latch for the next generation.
   useEffect(() => {
     if (status !== "online") {
       restoreRequested.current = false
       return
     }
-    if (pending !== null || restoreRequested.current) return
+    if (pending !== null) {
+      restoreRequested.current = true
+      return
+    }
+    if (restoreRequested.current) return
     restoreRequested.current = true
     void transportSend({ type: "input", text: ".__roll_pending" }).catch(() => {
-      // A failed send may be retried if this online generation renders again after
-      // another dependency change; the transport itself owns the visible error state.
+      // A failed send may be retried after a later online transition. The transport
+      // itself owns the visible connection error state.
       restoreRequested.current = false
     })
   }, [status, pending])
