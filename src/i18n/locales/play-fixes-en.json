@@ -1,5 +1,10 @@
 {
   "rolePlayer": "Player",
+  "character": {
+    "profile": "Creation profile (if required)",
+    "profilePlaceholder": "profile id or name",
+    "profileHint": "Some rule systems require a creation profile before the character name. Leave this empty when the system does not."
+  },
   "skills": {
     "builtins": {
       "image-gen": {
