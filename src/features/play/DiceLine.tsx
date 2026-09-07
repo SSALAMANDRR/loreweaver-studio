@@ -23,6 +23,7 @@ export default function DiceLine({ frame }: { frame: DiceFrame }) {
   // needs to understand" — so the two shapes the protocol names get layout, and
   // the rest is shown as-is rather than dropped.
   const { opposed, chips } = readDiceDetail(frame)
+  const target = frame.effective_target ?? frame.target
 
   return (
     <div className={`dice-line ${diceOutcomeClass(outcome)}`} data-kind={frame.kind}>
@@ -34,7 +35,7 @@ export default function DiceLine({ frame }: { frame: DiceFrame }) {
           <span className="dice-subsystem">{stripControlChars(frame.subsystem)}</span>
         ) : null}
         {stripControlChars(`${frame.actor} ${frame.expr} = ${frame.total}`)}
-        {typeof frame.target === "number" ? ` vs ${frame.target}` : ""}
+        {typeof target === "number" ? ` vs ${target}` : ""}
         {outcome ? ` → ${stripControlChars(outcome.label)}` : ""}
       </span>
       {frame.rolls.length > 0 ? <span className="dice-rolls">[{frame.rolls.join(", ")}]</span> : null}
