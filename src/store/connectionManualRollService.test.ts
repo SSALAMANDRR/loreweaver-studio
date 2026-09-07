@@ -19,7 +19,7 @@ function deliver(text: string): void {
   } as TransportEvent)
 }
 
-describe("manual-roll hidden service echoes", () => {
+describe("hidden rich-client service echoes", () => {
   beforeEach(() => {
     useSessionStore.getState().clear()
     useConnectionStore.setState({
@@ -29,9 +29,10 @@ describe("manual-roll hidden service echoes", () => {
     })
   })
 
-  it("filters submit and reconnect-refresh echoes but keeps ordinary player text", () => {
+  it("filters manual-roll and creation plumbing but keeps ordinary player text", () => {
     deliver(".__roll_pending")
     deliver(".__roll_submit req-17 17")
+    deliver(".__creation_action create done")
 
     expect(useSessionStore.getState().entries).toHaveLength(0)
 
