@@ -86,4 +86,33 @@ describe("ManualRollCard", () => {
       text: ".__roll_pending",
     })
   })
+
+  it("collects every physical face for a multi-die keep expression", async () => {
+    const user = userEvent.setup()
+    useManualRollStore.getState().ingest({
+      type: "roll_request",
+      request_id: "req-kh",
+      kind: "creation",
+      reason: "Strength",
+      expression: "3d10kh2+20",
+      count: 3,
+      sides: 10,
+      keep: "kh",
+      keep_count: 2,
+      modifier: 20,
+    })
+    render(<ManualRollCard />)
+
+    const dice = screen.getAllByRole("spinbutton")
+    expect(dice).toHaveLength(3)
+    await user.type(dice[0], "3")
+    await user.type(dice[1], "9")
+    await user.type(dice[2], "7")
+    await user.click(screen.getByRole("button", { name: "Confirm" }))
+
+    expect(transportSend).toHaveBeenCalledWith({
+      type: "input",
+      text: ".__roll_submit req-kh 3 9 7",
+    })
+  })
 })
