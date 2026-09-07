@@ -64,6 +64,29 @@ export interface CreationEquipmentItem {
   availability: number
 }
 
+export interface CharacterContextChoice {
+  id: string
+  label: string
+}
+
+export interface CharacterContextField {
+  id: string
+  kind: "choice" | "text" | "textarea"
+  required: boolean
+  label: string
+  placeholder?: string
+  options?: CharacterContextChoice[]
+}
+
+export interface CharacterContextState {
+  available: boolean
+  optional: boolean
+  complete: boolean
+  skipped: boolean
+  fields: CharacterContextField[]
+  values: Record<string, string>
+}
+
 export interface CreationStage {
   id: string
   kind: "profile_reroll" | "layer" | "duplicates" | "advancement" | "starting_equipment" | string
@@ -86,6 +109,7 @@ export interface CreationState {
   stage_count: number
   completed_stages: string[]
   stage: CreationStage | null
+  context?: CharacterContextState
 }
 
 export type CreationRuleSystemEntry = RuleSystemEntry & { creation?: CreationCatalog }
@@ -112,6 +136,14 @@ export function creationStepAction(payload: string): string {
 
 export function advancementAction(category: string, target: string): string {
   return `.__creation_action advance ${category} ${target}`
+}
+
+export function characterContextAction(values: Record<string, string>): string {
+  return `.__creation_action context set ${encodeURIComponent(JSON.stringify(values))}`
+}
+
+export function skipCharacterContextAction(): string {
+  return ".__creation_action context skip"
 }
 
 export function layerAction(option: CreationLayerOption, values: Record<string, string>): string {
