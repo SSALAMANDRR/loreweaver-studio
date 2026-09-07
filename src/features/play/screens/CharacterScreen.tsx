@@ -16,6 +16,12 @@ import { ResourceRow } from "../StatePanel"
 import ScreenShell from "./ScreenShell"
 import { sheetWrite } from "./sheetWrite"
 
+interface CharacterPresentation {
+  /** Additive server presentation fields. Storage ids remain authoritative for writes. */
+  system_label?: string
+  attribute_labels?: Record<string, string>
+}
+
 function attrText(value: unknown): string {
   if (value === null || value === undefined) return ""
   if (typeof value === "object") return JSON.stringify(value)
@@ -199,15 +205,16 @@ function CreateCharacter() {
 /** One attribute row. Editing writes through `.st <name>=<value>`, which the server
  * validates against the pack's constraints and answers in the chat log — nothing is
  * assumed to have worked here; the next `state` frame is the truth. */
-function AttributeRow({ name, value }: { name: string; value: unknown }) {
+function AttributeRow({ name, label, value }: { name: string; label?: string; value: unknown }) {
   const { t } = useTranslation()
   const online = useConnectionStore((s) => s.status === "online")
   const [draft, setDraft] = useState<string | null>(null)
+  const visibleName = stripControlChars(label ?? name)
 
   if (!isEditable(value)) {
     return (
       <tr>
-        <td className="play-attr-name">{stripControlChars(name)}</td>
+        <td className="play-attr-name">{visibleName}</td>
         <td>{attrText(value)}</td>
       </tr>
     )
@@ -222,7 +229,7 @@ function AttributeRow({ name, value }: { name: string; value: unknown }) {
 
   return (
     <tr>
-      <td className="play-attr-name">{stripControlChars(name)}</td>
+      <td className="play-attr-name">{visibleName}</td>
       <td>
         {draft === null ? (
           <button
@@ -250,7 +257,7 @@ function AttributeRow({ name, value }: { name: string; value: unknown }) {
                 setDraft(null)
               }
             }}
-            aria-label={name}
+            aria-label={visibleName}
           />
         )}
       </td>
@@ -265,6 +272,7 @@ export default function CharacterScreen({ onBack }: { onBack: () => void }) {
   const creation = currentCreation(game)
   const online = useConnectionStore((s) => s.status === "online")
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const presented = character as (NonNullable<typeof character> & CharacterPresentation) | null
 
   return (
     <ScreenShell title={t("play.menu.character")} onBack={onBack}>
@@ -277,7 +285,9 @@ export default function CharacterScreen({ onBack }: { onBack: () => void }) {
         <div className="play-character">
           <h3>
             {stripControlChars(character.name)}
-            <span className="desk-tag">{stripControlChars(character.system)}</span>
+            <span className="desk-tag">
+              {stripControlChars(presented?.system_label ?? character.system)}
+            </span>
           </h3>
           <div className="play-character-meters">
             {character.resources.map((resource) => (
@@ -304,7 +314,12 @@ export default function CharacterScreen({ onBack }: { onBack: () => void }) {
               <table className="play-table">
                 <tbody>
                   {Object.entries(character.attributes).map(([key, value]) => (
-                    <AttributeRow key={key} name={key} value={value} />
+                    <AttributeRow
+                      key={key}
+                      name={key}
+                      label={presented?.attribute_labels?.[key]}
+                      value={value}
+                    />
                   ))}
                 </tbody>
               </table>
