@@ -61,8 +61,9 @@ describe("CharacterContextSetup", () => {
 
     const sent = vi.mocked(transportSend).mock.calls[0]?.[0]
     expect(sent?.type).toBe("input")
-    expect(sent?.text.startsWith(".__creation_action context set ")).toBe(true)
-    const encoded = sent?.text.replace(".__creation_action context set ", "") ?? ""
+    const sentText = sent?.type === "input" ? sent.text : ""
+    expect(sentText.startsWith(".__creation_action context set ")).toBe(true)
+    const encoded = sentText.replace(".__creation_action context set ", "")
     expect(JSON.parse(decodeURIComponent(encoded))).toEqual({
       status: "deserter",
       goal: "Build a criminal empire",
