@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import { useConnectionStore } from "../../store/connection"
 import { quitTable } from "../../store/hostLocal"
 import InputBox from "./InputBox"
+import ManualRollCard from "./ManualRollCard"
 import NarrativeLog from "./NarrativeLog"
 import { PanelSidebar, PanelTray } from "./panels/PanelDeck"
 import PanelMenu from "./panels/PanelMenu"
@@ -9,8 +10,8 @@ import PanelModalHost from "./panels/PanelModalHost"
 import PanelNotice from "./panels/PanelNotice"
 import StatePanel from "./StatePanel"
 import StatusPill from "./StatusPill"
-import VersionBadge from "./VersionBadge"
 import TurnStatus from "./TurnStatus"
+import VersionBadge from "./VersionBadge"
 
 export default function SessionView({ onMenu }: { onMenu?: () => void }) {
   const { t } = useTranslation()
@@ -37,6 +38,7 @@ export default function SessionView({ onMenu }: { onMenu?: () => void }) {
         <TurnStatus />
         <NarrativeLog />
         <PanelTray />
+        <ManualRollCard />
         <InputBox />
       </div>
       <aside className="desk-pane">
