@@ -84,7 +84,7 @@ describe("CharacterScreen — creation", () => {
     )
     render(<CharacterScreen onBack={() => {}} />)
 
-    await userEvent.type(screen.getByLabelText("Creation profile (if required)"), "hive")
+    await userEvent.type(screen.getByLabelText(/Creation profile \(if required\)/), "hive")
     await userEvent.type(screen.getByLabelText("Name"), "Lin Quill")
     await userEvent.click(screen.getByRole("button", { name: "Create character" }))
 
