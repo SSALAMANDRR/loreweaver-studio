@@ -1,7 +1,5 @@
-// The character screen's two jobs: make one, and change one. Both go out as ordinary
-// commands, and everything the screen knows about a rule system it learned from the
-// wire — pinned here, because the failure mode is a client quietly growing its own
-// copy of CoC and D&D (which is what the TUI's equivalent screen did).
+// The character screen learns every creation choice from `state`; no system ids,
+// profile names or rule tables belong in the client.
 
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -61,42 +59,62 @@ describe("CharacterScreen — creation", () => {
     useSessionStore.getState().ingest(stateFrame())
   })
 
-  it("offers the systems the SERVER reported, not a hard-coded pair", async () => {
+  it("offers the systems the SERVER reported, not a hard-coded pair", () => {
     render(<CharacterScreen onBack={() => {}} />)
 
     const picker = screen.getByLabelText("Rule system") as HTMLSelectElement
-    // Roll mode can only offer systems whose pack declares a make-char word.
     expect([...picker.options].map((option) => option.value)).toEqual(["coc7", "dnd5e"])
   })
 
-  it("rolls with the pack's own dialect word", async () => {
+  it("starts rolled creation through the hidden rich-client lane", async () => {
     render(<CharacterScreen onBack={() => {}} />)
     await userEvent.type(screen.getByLabelText("Name"), "Lin Quill")
     await userEvent.click(screen.getByRole("button", { name: "Create character" }))
 
-    expect(sent).toEqual([{ type: "input", text: ".coc Lin Quill" }])
+    expect(sent).toEqual([
+      { type: "input", text: ".__creation_action start coc7 |  | Lin Quill" },
+    ])
   })
 
-  it("passes an optional creation profile through the generic profiled make-char surface", async () => {
+  it("renders the advertised profile catalog instead of a free-form rule id field", async () => {
     useSessionStore.getState().clear()
     useSessionStore.getState().ingest(
-      stateFrame({ systems: [{ id: "profiled", make_char: "make" }] }),
+      stateFrame({
+        systems: [
+          {
+            id: "profiled",
+            make_char: "make",
+            creation: {
+              staged: true,
+              requires_profile: true,
+              profiles: [
+                { id: "hive", label: "Hive World" },
+                { id: "forge", label: "Forge World" },
+              ],
+            },
+          },
+        ],
+      }),
     )
     render(<CharacterScreen onBack={() => {}} />)
 
-    await userEvent.type(screen.getByLabelText(/Creation profile \(if required\)/), "hive")
+    const picker = screen.getByLabelText(/Creation profile \(if required\)/) as HTMLSelectElement
+    expect([...picker.options].map((option) => option.textContent)).toEqual(["Hive World", "Forge World"])
+    await userEvent.selectOptions(picker, "forge")
     await userEvent.type(screen.getByLabelText("Name"), "Lin Quill")
     await userEvent.click(screen.getByRole("button", { name: "Create character" }))
 
-    expect(sent).toEqual([{ type: "input", text: ".make hive | Lin Quill" }])
+    expect(sent).toEqual([
+      { type: "input", text: ".__creation_action start profiled | forge | Lin Quill" },
+    ])
   })
 
-  it("uses the chosen system's word, so a pack's own system works untouched", async () => {
+  it("keeps a community pack generic: the server system id is enough", async () => {
     render(<CharacterScreen onBack={() => {}} />)
     await userEvent.selectOptions(screen.getByLabelText("Rule system"), "dnd5e")
     await userEvent.click(screen.getByRole("button", { name: "Create character" }))
 
-    expect(sent).toEqual([{ type: "input", text: ".dnd" }])
+    expect(sent).toEqual([{ type: "input", text: ".__creation_action start dnd5e |  | " }])
   })
 
   it("drafts from a description through the server's own generator", async () => {
@@ -157,17 +175,12 @@ describe("CharacterScreen — editing", () => {
   })
 
   it("edits through a text box, because pasting into a number box took the app down", async () => {
-    // Three times out of three, ⌘V into this field reloaded the whole WebView and dropped
-    // the table (2026-08-20 play-test) — a crash below our floor, in WebKit's native paste
-    // path for `<input type=number>`. The dodge is also the better control: no spinner, and
-    // no scroll wheel quietly rewriting a stat. Pinned so nobody "tidies" it back.
     render(<CharacterScreen onBack={() => {}} />)
     await userEvent.click(screen.getByRole("button", { name: "55" }))
     const box = screen.getByLabelText("力量")
     expect(box).toHaveAttribute("type", "text")
     expect(box).toHaveAttribute("inputMode", "numeric")
 
-    // And what a paste actually delivers — stray whitespace and all — still commits.
     await userEvent.clear(box)
     await userEvent.paste("  62  ")
     await userEvent.keyboard("{Enter}")
@@ -175,8 +188,6 @@ describe("CharacterScreen — editing", () => {
   })
 
   it("writes through the explicit `=` form, so a negative or a digit-bearing key is exact", async () => {
-    // The bare `.st X -3` is "current minus 3" to the engine and `.st skill2 30` splits
-    // the name; `.st X=-3` / `.st skill2=30` are absolute and unambiguous (engine 2.3).
     expect(sheetWrite("力量", 70)).toBe(".st 力量=70")
     expect(sheetWrite("mod", -3)).toBe(".st mod=-3")
     expect(sheetWrite("skill2", 30)).toBe(".st skill2=30")
@@ -196,8 +207,6 @@ describe("CharacterScreen — editing", () => {
     await userEvent.click(screen.getByRole("button", { name: "Describe" }))
     await userEvent.selectOptions(screen.getByLabelText("Rule system"), "wod")
     await userEvent.click(screen.getByRole("button", { name: "Roll" }))
-    // Roll cannot make a wod sheet (no make-char word): the box falls back to the
-    // first rollable system and the button is live for THAT, not disabled for wod.
     expect((screen.getByLabelText("Rule system") as HTMLSelectElement).value).toBe("coc7")
     expect(screen.getByRole("button", { name: "Create character" })).toBeEnabled()
   })
