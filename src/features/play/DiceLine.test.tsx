@@ -44,6 +44,23 @@ describe("DiceLine", () => {
     expect(line).toHaveTextContent("[3]")
   })
 
+  it("renders the effective target when difficulty changed what the roll was graded against", () => {
+    const frame: DiceFrame = {
+      type: "dice",
+      actor: "Nyx",
+      kind: "check",
+      expr: "WS",
+      rolls: [14],
+      total: 14,
+      target: 34,
+      effective_target: 14,
+      outcome: outcome({}),
+    }
+    const { container } = render(<DiceLine frame={frame} />)
+    expect(container).toHaveTextContent("Nyx WS = 14 vs 14 → Success")
+    expect(container).not.toHaveTextContent("vs 34")
+  })
+
   it("colors a critical success with the crit class", () => {
     const frame: DiceFrame = {
       type: "dice",
