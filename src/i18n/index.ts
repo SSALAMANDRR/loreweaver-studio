@@ -37,6 +37,10 @@ const enMerged = {
       ...en.play.model,
       ...modelAuthEn,
     },
+    character: {
+      ...en.play.character,
+      ...playFixesEn.character,
+    },
     skills: {
       ...en.play.skills,
       ...playFixesEn.skills,
@@ -59,6 +63,10 @@ const ruMerged = {
     model: {
       ...ru.play.model,
       ...modelAuthRu,
+    },
+    character: {
+      ...ru.play.character,
+      ...playFixesRu.character,
     },
     skills: {
       ...ru.play.skills,
@@ -90,6 +98,10 @@ const zhMerged = {
     model: {
       ...zh.play.model,
       ...modelAuthZh,
+    },
+    character: {
+      ...zh.play.character,
+      ...playFixesZh.character,
     },
     skills: {
       ...zh.play.skills,
