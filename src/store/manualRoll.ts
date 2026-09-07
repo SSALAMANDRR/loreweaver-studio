@@ -43,10 +43,12 @@ export function isManualRollServerFrame(value: unknown): value is ManualRollServ
     typeof value.kind === "string" &&
     typeof value.reason === "string" &&
     typeof value.expression === "string" &&
+    typeof value.count === "number" &&
     Number.isInteger(value.count) &&
-    (value.count as number) >= 1 &&
+    value.count >= 1 &&
+    typeof value.sides === "number" &&
     Number.isInteger(value.sides) &&
-    (value.sides as number) >= 2 &&
+    value.sides >= 2 &&
     isOptionalNumber(value.target) &&
     isOptionalNumber(value.effective_target) &&
     (value.difficulty === undefined || typeof value.difficulty === "string")
