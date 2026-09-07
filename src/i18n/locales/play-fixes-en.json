@@ -17,7 +17,11 @@
       "finishXp": "Finish advancement",
       "equipmentRemaining": "Starting acquisitions remaining: {{remaining}}",
       "complete": "Character creation is complete.",
-      "unsupportedStage": "This creation step cannot be rendered by this Studio version yet."
+      "unsupportedStage": "This creation step cannot be rendered by this Studio version yet.",
+      "contextTitle": "Current position and motivation",
+      "contextHint": "Optional narrative context. The classic campaign premise is only one possibility; describe who the character serves, opposes, or is hiding from now.",
+      "contextSave": "Save context",
+      "contextSkip": "Skip"
     }
   },
   "skills": {
