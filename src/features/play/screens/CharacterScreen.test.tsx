@@ -77,6 +77,20 @@ describe("CharacterScreen — creation", () => {
     expect(sent).toEqual([{ type: "input", text: ".coc Lin Quill" }])
   })
 
+  it("passes an optional creation profile through the generic profiled make-char surface", async () => {
+    useSessionStore.getState().clear()
+    useSessionStore.getState().ingest(
+      stateFrame({ systems: [{ id: "profiled", make_char: "make" }] }),
+    )
+    render(<CharacterScreen onBack={() => {}} />)
+
+    await userEvent.type(screen.getByLabelText("Creation profile (if required)"), "hive")
+    await userEvent.type(screen.getByLabelText("Name"), "Lin Quill")
+    await userEvent.click(screen.getByRole("button", { name: "Create character" }))
+
+    expect(sent).toEqual([{ type: "input", text: ".make hive | Lin Quill" }])
+  })
+
   it("uses the chosen system's word, so a pack's own system works untouched", async () => {
     render(<CharacterScreen onBack={() => {}} />)
     await userEvent.selectOptions(screen.getByLabelText("Rule system"), "dnd5e")
