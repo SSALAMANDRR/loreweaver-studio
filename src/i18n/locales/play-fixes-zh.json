@@ -17,7 +17,11 @@
       "finishXp": "完成成长",
       "equipmentRemaining": "剩余初始装备选择：{{remaining}}",
       "complete": "角色创建已完成。",
-      "unsupportedStage": "当前 Studio 版本尚不能显示此创建步骤。"
+      "unsupportedStage": "当前 Studio 版本尚不能显示此创建步骤。",
+      "contextTitle": "当前处境与动机",
+      "contextHint": "可选的叙事背景。经典的审判庭服役只是其中一种可能；请说明角色现在效忠、反对或躲避谁。",
+      "contextSave": "保存背景",
+      "contextSkip": "跳过"
     }
   },
   "skills": {
