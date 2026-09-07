@@ -54,7 +54,9 @@ function LayerStage({ creation }: { creation: CreationState }) {
       option.choices.map((group) => [group.id, groupValue(group, choices, specializations)]),
     )
   }, [option, choices, specializations])
-  const complete = Boolean(option) && option.choices.every((group) => Boolean(values[group.id]?.trim()))
+  const complete = option
+    ? option.choices.every((group) => Boolean(values[group.id]?.trim()))
+    : false
 
   const submit = () => {
     if (!option || !complete) return
