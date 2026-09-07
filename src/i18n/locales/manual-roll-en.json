@@ -1,0 +1,12 @@
+{
+  "title": "Manual roll",
+  "difficulty": "Difficulty: {{value}}",
+  "target": "Target: {{value}}",
+  "throw": "Roll {{expression}}",
+  "result": "Result",
+  "die": "Die {{index}}",
+  "submit": "Confirm",
+  "submitting": "Submitting…",
+  "sendFailed": "Could not submit the roll. Check the connection and try again.",
+  "finishFirst": "Finish the pending dice roll first"
+}
