@@ -52,7 +52,7 @@ describe("locale resources", () => {
       const leaves = keyPaths(locale)
       expect(leaves.length).toBeGreaterThan(0)
       const flat = JSON.stringify(locale)
-      expect(flat).not.toContain('\"\"')
+      expect(flat).not.toContain('""')
     }
   })
 
