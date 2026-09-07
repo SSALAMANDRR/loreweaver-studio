@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import "../../i18n"
 import { useConnectionStore } from "../../store/connection"
+import { useManualRollStore } from "../../store/manualRoll"
 import { useSessionStore } from "../../store/session"
 import InputBox from "./InputBox"
 
@@ -18,6 +19,7 @@ describe("InputBox", () => {
     vi.mocked(transportSend).mockClear()
     vi.mocked(transportSend).mockResolvedValue(undefined)
     useSessionStore.getState().clear()
+    useManualRollStore.getState().clear()
     useConnectionStore.setState({
       status: "online",
       welcome: {
@@ -74,6 +76,20 @@ describe("InputBox", () => {
 
   it("is disabled unless the connection is online", () => {
     useConnectionStore.setState({ status: "reconnecting" })
+    render(<InputBox />)
+    expect(screen.getByRole("textbox")).toBeDisabled()
+  })
+
+  it("is disabled while a physical dice request is pending", () => {
+    useManualRollStore.getState().ingest({
+      type: "roll_request",
+      request_id: "req-1",
+      kind: "check",
+      reason: "Awareness",
+      expression: "1d100",
+      count: 1,
+      sides: 100,
+    })
     render(<InputBox />)
     expect(screen.getByRole("textbox")).toBeDisabled()
   })
