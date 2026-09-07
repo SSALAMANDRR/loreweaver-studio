@@ -266,7 +266,7 @@ export default function CreationWizard({ creation }: { creation: CreationState }
                 key={`${purchase.category}:${purchase.target}`}
                 type="button"
                 className="ghost-button"
-                disabled={!online || !purchase.affordable}
+                disabled={!online || purchase.cost > (stage.budget?.available ?? 0)}
                 onClick={() => send(advancementAction(purchase.category, purchase.target))}
               >
                 {purchase.label} · {purchase.stage} · {purchase.cost} XP
