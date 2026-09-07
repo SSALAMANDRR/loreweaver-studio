@@ -3,7 +3,22 @@
   "character": {
     "profile": "Creation profile (if required)",
     "profilePlaceholder": "profile id or name",
-    "profileHint": "Some rule systems require a creation profile before the character name. Leave this empty when the system does not."
+    "profileHint": "Some rule systems require a creation profile before the character name. Leave this empty when the system does not.",
+    "creation": {
+      "progress": "Creation step {{current}} of {{total}}",
+      "option": "Choose an option",
+      "choose": "Choose…",
+      "specialization": "Specialization",
+      "apply": "Apply choice",
+      "replacement": "Replacement {{index}}",
+      "rerollHint": "You may reroll one characteristic. The second result is final.",
+      "keep": "Keep these characteristics",
+      "xp": "XP available: {{available}} · spent: {{spent}}",
+      "finishXp": "Finish advancement",
+      "equipmentRemaining": "Starting acquisitions remaining: {{remaining}}",
+      "complete": "Character creation is complete.",
+      "unsupportedStage": "This creation step cannot be rendered by this Studio version yet."
+    }
   },
   "skills": {
     "builtins": {
