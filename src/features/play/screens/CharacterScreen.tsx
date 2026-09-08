@@ -380,6 +380,7 @@ export default function CharacterScreen({ onBack }: { onBack: () => void }) {
                   attribute_labels: presented?.attribute_labels,
                 }}
               />
+              {service}
             </>
           ) : (
             <>
