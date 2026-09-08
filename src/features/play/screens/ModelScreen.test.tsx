@@ -33,7 +33,11 @@ function config(
     saved_providers: savedProviders,
     override_active: false,
     using_demo: usingDemo,
-    subscription_status: subscriptionStatus,
+    // The published protocol currently types this optional hint as the legacy
+    // stable values only. The server also uses provider-prefixed transient
+    // login states; production reads the field defensively as unknown, and the
+    // test mirrors those wire values deliberately.
+    subscription_status: subscriptionStatus as "" | "logged_in" | "logged_out",
   }
   useAdminStore.setState({
     config: nextConfig,
