@@ -47,6 +47,11 @@ export interface TransportConnectParams {
  * the connection store owns it, because it owns what the generation gates. */
 export type DialParams = Omit<TransportConnectParams, "generation">
 
+/** Studio speaks the released protocol package plus additive server frames that
+ * have not reached the npm package yet. Unknown additive frames are rejected by
+ * older servers without affecting ordinary input. */
+export type StudioClientFrame = ClientFrame | { type: "locale"; locale: "en" | "ru" | "zh" }
+
 /** One page load = one transport session, with its own generation counter.
  *
  * The counter alone cannot be trusted across a reload: a fresh page starts at
@@ -83,7 +88,7 @@ export async function transportDisconnect(connectionId: string | null): Promise<
   await invoke("transport_disconnect", { connectionId })
 }
 
-export async function transportSend(frame: ClientFrame): Promise<void> {
+export async function transportSend(frame: StudioClientFrame): Promise<void> {
   await invoke("transport_send", { frame })
 }
 
