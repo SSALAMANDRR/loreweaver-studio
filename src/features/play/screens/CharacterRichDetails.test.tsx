@@ -9,7 +9,7 @@ vi.mock("../../../lib/transport", () => ({
   transportSend: async () => undefined,
 }))
 
-import "../../../i18n"
+import i18n from "../../../i18n"
 import { useConnectionStore } from "../../../store/connection"
 import { useSessionStore } from "../../../store/session"
 import CharacterScreen from "./CharacterScreen"
@@ -37,7 +37,8 @@ function richState(): StateFrame {
 }
 
 describe("CharacterScreen rich details", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("ru")
     useSessionStore.getState().clear()
     useConnectionStore.setState({
       status: "online",
