@@ -296,7 +296,13 @@ export default function CharacterScreen({ onBack }: { onBack: () => void }) {
           </div>
 
           {creation && !creation.complete ? (
-            <CreationWizard creation={creation} />
+            <CreationWizard
+              creation={creation}
+              character={{
+                attributes: character.attributes,
+                attribute_labels: presented?.attribute_labels,
+              }}
+            />
           ) : (
             <>
               {creation?.context && !creation.context.complete ? (

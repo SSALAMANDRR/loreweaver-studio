@@ -19,10 +19,23 @@ export interface CreationCatalog {
   presentation?: CreationPresentation
 }
 
+export interface CreationEffectValue {
+  label: string
+  value: unknown
+}
+
+export interface CreationEffect {
+  grants?: string[]
+  skills?: CreationEffectValue[]
+  equipment?: string[]
+  attributes?: CreationEffectValue[]
+}
+
 export interface CreationChoiceOption {
   id: string
   label: string
   specialization?: boolean
+  effect?: CreationEffect
 }
 
 export interface CreationChoiceGroup {
@@ -40,6 +53,7 @@ export interface CreationLayerOption {
   choices: CreationChoiceGroup[]
   detail?: string[]
   source?: string
+  effect?: CreationEffect
 }
 
 export interface CreationRerollTarget {
@@ -51,6 +65,7 @@ export interface CreationRerollTarget {
 export interface CreationDuplicateRequirement {
   field: string
   count: number
+  current?: string[]
   choices: Array<{ id: string; label: string }>
 }
 
@@ -110,6 +125,7 @@ export interface CreationStage {
   budget?: Record<string, number>
   purchases?: CreationAdvancementPurchase[]
   items?: CreationEquipmentItem[]
+  inventory?: string[]
 }
 
 export interface CreationState {
@@ -121,6 +137,11 @@ export interface CreationState {
   completed_stages: string[]
   stage: CreationStage | null
   context?: CharacterContextState
+}
+
+export interface CreationCharacterSnapshot {
+  attributes: Record<string, unknown>
+  attribute_labels?: Record<string, string>
 }
 
 export type CreationRuleSystemEntry = RuleSystemEntry & { creation?: CreationCatalog }

@@ -7,7 +7,9 @@ import {
   creationStepAction,
   duplicateAction,
   layerAction,
+  type CreationCharacterSnapshot,
   type CreationChoiceGroup,
+  type CreationEffect,
   type CreationPresentation,
   type CreationState,
 } from "./creation"
@@ -28,6 +30,73 @@ function StageGuide({ presentation }: { presentation?: CreationPresentation }) {
       {description ? <p className="studio-hint">{description}</p> : null}
       {choice ? <p className="studio-hint">{choice}</p> : null}
       {effect ? <p className="studio-hint">{effect}</p> : null}
+    </div>
+  )
+}
+
+function effectValue(value: unknown): string {
+  if (value === null || value === undefined) return ""
+  if (typeof value === "object") return JSON.stringify(value)
+  return String(value)
+}
+
+function EffectSummary({ effect }: { effect?: CreationEffect }) {
+  const { t } = useTranslation()
+  if (!effect) return null
+
+  const grants = effect.grants ?? []
+  const equipment = effect.equipment ?? []
+  const skills = effect.skills ?? []
+  const attributes = effect.attributes ?? []
+  if (grants.length + equipment.length + skills.length + attributes.length === 0) return null
+
+  return (
+    <div className="play-form">
+      {grants.length > 0 ? (
+        <p className="studio-hint">
+          <strong>{t("play.character.creation.effectGrants")}:</strong> {grants.join(", ")}
+        </p>
+      ) : null}
+      {skills.length > 0 ? (
+        <p className="studio-hint">
+          <strong>{t("play.character.creation.effectSkills")}:</strong>{" "}
+          {skills.map((entry) => `${entry.label} (${effectValue(entry.value)})`).join(", ")}
+        </p>
+      ) : null}
+      {equipment.length > 0 ? (
+        <p className="studio-hint">
+          <strong>{t("play.character.creation.effectEquipment")}:</strong> {equipment.join(", ")}
+        </p>
+      ) : null}
+      {attributes.length > 0 ? (
+        <p className="studio-hint">
+          <strong>{t("play.character.creation.effectAttributes")}:</strong>{" "}
+          {attributes.map((entry) => `${entry.label}: ${effectValue(entry.value)}`).join(", ")}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+function CharacterSummary({ character }: { character?: CreationCharacterSnapshot }) {
+  const { t } = useTranslation()
+  if (!character) return null
+  const entries = Object.entries(character.attributes ?? {})
+  if (entries.length === 0) return null
+
+  return (
+    <div className="play-form">
+      <h4>{t("play.character.creation.currentCharacteristics")}</h4>
+      <table className="play-table">
+        <tbody>
+          {entries.map(([key, value]) => (
+            <tr key={key}>
+              <td className="play-attr-name">{character.attribute_labels?.[key] ?? key}</td>
+              <td>{effectValue(value)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
@@ -100,6 +169,7 @@ function LayerStage({ creation }: { creation: CreationState }) {
           {text}
         </p>
       ))}
+      <EffectSummary effect={option?.effect} />
       {option?.source ? <p className="studio-hint">{option.source}</p> : null}
 
       {option?.choices.map((group) => {
@@ -146,6 +216,7 @@ function LayerStage({ creation }: { creation: CreationState }) {
                 />
               </label>
             ) : null}
+            <EffectSummary effect={selectedOption?.effect} />
           </div>
         )
       })}
@@ -187,24 +258,31 @@ function DuplicateStage({ creation }: { creation: CreationState }) {
 
   return (
     <div className="play-form">
-      {requirements.map((requirement) =>
-        Array.from({ length: requirement.count }, (_, index) => (
-          <label className="field" key={`${requirement.field}-${index}`}>
-            {t("play.character.creation.replacement", { index: index + 1 })}
-            <select
-              value={values[requirement.field]?.[index] ?? ""}
-              onChange={(event) => setValue(requirement.field, index, event.target.value)}
-            >
-              <option value="">{t("play.character.creation.choose")}</option>
-              {requirement.choices.map((choice) => (
-                <option key={choice.id} value={choice.id}>
-                  {choice.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        )),
-      )}
+      {requirements.map((requirement) => (
+        <div className="play-form" key={requirement.field}>
+          {requirement.current && requirement.current.length > 0 ? (
+            <p className="studio-hint">
+              {t("play.character.creation.currentValues", { values: requirement.current.join(", ") })}
+            </p>
+          ) : null}
+          {Array.from({ length: requirement.count }, (_, index) => (
+            <label className="field" key={`${requirement.field}-${index}`}>
+              {t("play.character.creation.replacement", { index: index + 1 })}
+              <select
+                value={values[requirement.field]?.[index] ?? ""}
+                onChange={(event) => setValue(requirement.field, index, event.target.value)}
+              >
+                <option value="">{t("play.character.creation.choose")}</option>
+                {requirement.choices.map((choice) => (
+                  <option key={choice.id} value={choice.id}>
+                    {choice.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </div>
+      ))}
       <button
         type="button"
         className="primary-button"
@@ -217,7 +295,80 @@ function DuplicateStage({ creation }: { creation: CreationState }) {
   )
 }
 
-export default function CreationWizard({ creation }: { creation: CreationState }) {
+function StartingEquipmentStage({ creation }: { creation: CreationState }) {
+  const { t } = useTranslation()
+  const online = useConnectionStore((s) => s.status === "online")
+  const stage = creation.stage
+  const items = stage?.items ?? []
+  const inventory = stage?.inventory ?? []
+  const used = stage?.budget?.used ?? 0
+  const [pending, setPending] = useState<{ id: string; used: number } | null>(null)
+
+  useEffect(() => {
+    if (pending && used !== pending.used) setPending(null)
+  }, [pending, used])
+
+  useEffect(() => {
+    setPending(null)
+  }, [stage?.id])
+
+  const choose = (id: string) => {
+    if (!online || pending) return
+    setPending({ id, used })
+    void transportSend({ type: "input", text: creationStepAction(id) }).catch(() => setPending(null))
+  }
+
+  return (
+    <div className="play-form">
+      <p className="studio-hint">
+        {t("play.character.creation.equipmentRemaining", {
+          remaining: stage?.budget?.remaining ?? 0,
+        })}
+      </p>
+
+      {inventory.length > 0 ? (
+        <div className="play-form">
+          <h4>{t("play.character.creation.currentEquipment")}</h4>
+          <div className="chip-row">
+            {inventory.map((item, index) => (
+              <span className="chip" key={`${item}-${index}`}>
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="play-form">
+        {items.map((item) => {
+          const waiting = pending?.id === item.id
+          const kind = t(`play.character.creation.equipmentKind.${item.kind}`, { defaultValue: item.kind })
+          return (
+            <button
+              key={item.id}
+              type="button"
+              className="ghost-button"
+              disabled={!online || pending !== null}
+              aria-busy={waiting}
+              onClick={() => choose(item.id)}
+            >
+              {item.label} · {kind} · {t("play.character.creation.availability", { value: item.availability })}
+              {waiting ? ` · ${t("play.character.creation.equipmentAdding")}` : ""}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+export default function CreationWizard({
+  creation,
+  character,
+}: {
+  creation: CreationState
+  character?: CreationCharacterSnapshot
+}) {
   const { t } = useTranslation()
   const online = useConnectionStore((s) => s.status === "online")
   const stage = creation.stage
@@ -237,6 +388,7 @@ export default function CreationWizard({ creation }: { creation: CreationState }
         </span>
       </div>
 
+      <CharacterSummary character={character} />
       <StageGuide presentation={stage.presentation} />
 
       {stage.kind === "profile_reroll" ? (
@@ -296,35 +448,16 @@ export default function CreationWizard({ creation }: { creation: CreationState }
                 disabled={!online || purchase.cost > (stage.budget?.available ?? 0)}
                 onClick={() => send(advancementAction(purchase.category, purchase.target))}
               >
-                {purchase.label} · {purchase.stage_label ?? purchase.stage} · {purchase.current} → {purchase.next} · {purchase.cost} XP
+                {purchase.category_label ? `${purchase.category_label} · ` : ""}
+                {purchase.label} · {purchase.stage_label ?? purchase.stage} · {purchase.current} → {purchase.next} ·{" "}
+                {purchase.cost} XP
               </button>
             ))}
           </div>
         </div>
       ) : null}
 
-      {stage.kind === "starting_equipment" ? (
-        <div className="play-form">
-          <p className="studio-hint">
-            {t("play.character.creation.equipmentRemaining", {
-              remaining: stage.budget?.remaining ?? 0,
-            })}
-          </p>
-          <div className="play-form">
-            {(stage.items ?? []).map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className="ghost-button"
-                disabled={!online}
-                onClick={() => send(creationStepAction(item.id))}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      {stage.kind === "starting_equipment" ? <StartingEquipmentStage creation={creation} /> : null}
 
       {!["profile_reroll", "layer", "duplicates", "advancement", "starting_equipment"].includes(
         stage.kind,
