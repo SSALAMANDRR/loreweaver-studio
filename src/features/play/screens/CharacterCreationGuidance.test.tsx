@@ -34,18 +34,32 @@ describe("CharacterScreen creation guidance", () => {
               choice: "Выберите один родной мир.",
               effect: "Выбор влияет на стартовые характеристики.",
             },
-            profiles: [{ id: "hive", label: "Мир-улей" }],
+            profiles: [
+              {
+                id: "hive",
+                label: "Мир-улей",
+                detail: [
+                  "Сильные характеристики: Ловкость и Восприятие.",
+                  "Раны: 8+1к5. Судьба: 2.",
+                ],
+                source: "DH2 RU v1.8 p. 42",
+                choices: [],
+              },
+            ],
           },
         },
       ],
     } as never)
   })
 
-  it("renders server-authored guidance before the profile picker", () => {
+  it("renders server-authored guidance and the selected profile consequences", () => {
     render(<CharacterScreen onBack={() => {}} />)
 
     expect(screen.getByText("Характеристики и родной мир")).toBeInTheDocument()
     expect(screen.getByText(/Выберите родной мир перед генерацией/)).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "Мир-улей" })).toBeInTheDocument()
+    expect(screen.getByText(/Сильные характеристики: Ловкость и Восприятие/)).toBeInTheDocument()
+    expect(screen.getByText(/Раны: 8\+1к5\. Судьба: 2/)).toBeInTheDocument()
+    expect(screen.getByText("DH2 RU v1.8 p. 42")).toBeInTheDocument()
   })
 })

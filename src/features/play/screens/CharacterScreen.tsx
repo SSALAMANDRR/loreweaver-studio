@@ -68,6 +68,7 @@ function CreateCharacter() {
       ? profile
       : (profiles[0]?.id ?? "")
     : ""
+  const selectedProfile = profiles.find((entry) => entry.id === chosenProfile)
 
   if (systems.length === 0) {
     return <p className="placeholder">{t("play.character.noSystems")}</p>
@@ -160,6 +161,26 @@ function CreateCharacter() {
             ))}
           </select>
         </label>
+      ) : null}
+
+      {mode === "roll" && selectedProfile ? (
+        <div className="play-form">
+          <h4>{selectedProfile.label}</h4>
+          {selectedProfile.detail?.map((text) => (
+            <p className="studio-hint" key={text}>
+              {text}
+            </p>
+          ))}
+          {selectedProfile.choices?.map((group) => (
+            <p className="studio-hint" key={group.id}>
+              <strong>{group.label}:</strong>{" "}
+              {group.options.length > 0
+                ? group.options.map((entry) => entry.label).join(" / ")
+                : t("play.character.creation.specialization")}
+            </p>
+          ))}
+          {selectedProfile.source ? <p className="studio-hint">{selectedProfile.source}</p> : null}
+        </div>
       ) : null}
 
       {mode === "import" ? (

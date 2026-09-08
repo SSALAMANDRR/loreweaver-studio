@@ -10,6 +10,10 @@ export interface CreationPresentation {
 export interface CreationProfile {
   id: string
   label: string
+  detail?: string[]
+  source?: string
+  effect?: CreationEffect
+  choices?: CreationChoiceGroup[]
 }
 
 export interface CreationCatalog {
