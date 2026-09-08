@@ -4,6 +4,21 @@
     "profile": "Creation profile (if required)",
     "profilePlaceholder": "profile id or name",
     "profileHint": "Some rule systems require a creation profile before the character name. Leave this empty when the system does not.",
+    "workbench": {
+      "tabsLabel": "Character sheet sections",
+      "tabs": {
+        "physical": "Physical",
+        "skills": "Skills",
+        "talents": "Talents",
+        "equipment": "Equipment",
+        "status": "Status",
+        "service": "Service"
+      },
+      "figure": "Character diagram",
+      "characteristics": "Characteristics",
+      "noData": "The server has not exposed this section yet. The test UI shows that explicitly instead of hiding it behind an empty screen.",
+      "noStatuses": "No active status effects."
+    },
     "creation": {
       "progress": "Creation step {{current}} of {{total}}",
       "option": "Choose an option",

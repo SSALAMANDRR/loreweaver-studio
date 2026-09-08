@@ -4,6 +4,21 @@
     "profile": "创建档案（如系统要求）",
     "profilePlaceholder": "档案 ID 或名称",
     "profileHint": "有些规则系统要求在角色名之前指定创建档案。不需要时请留空。",
+    "workbench": {
+      "tabsLabel": "角色表分区",
+      "tabs": {
+        "physical": "身体数据",
+        "skills": "技能",
+        "talents": "天赋",
+        "equipment": "装备",
+        "status": "状态",
+        "service": "维护"
+      },
+      "figure": "角色示意图",
+      "characteristics": "属性",
+      "noData": "服务器尚未提供此分区的数据。测试界面会明确显示这一点，而不是藏在空白页面里。",
+      "noStatuses": "没有活动状态。"
+    },
     "creation": {
       "progress": "角色创建：第 {{current}} / {{total}} 步",
       "option": "选择一个选项",

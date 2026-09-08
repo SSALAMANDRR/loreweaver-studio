@@ -1,8 +1,3 @@
-// My character — create it and maintain it without teaching the client any rule
-// system. Creation catalogs and staged lifecycle state arrive through `state`; all
-// mutations still go through the engine's deterministic command handlers via a hidden
-// rich-client adapter. The Studio renders ids + labels + generic choice shapes only.
-
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { stripControlChars } from "@loreweaver/protocol"
@@ -10,6 +5,7 @@ import { transportSend } from "../../../lib/transport"
 import { useConnectionStore } from "../../../store/connection"
 import { useSessionStore } from "../../../store/session"
 import CharacterContextSetup from "../CharacterContextSetup"
+import CharacterSheetWorkbench from "../CharacterSheetWorkbench"
 import CreationWizard from "../CreationWizard"
 import { creationSystems, currentCreation, startCreationAction } from "../creation"
 import { ResourceRow } from "../StatePanel"
@@ -17,9 +13,12 @@ import ScreenShell from "./ScreenShell"
 import { sheetWrite } from "./sheetWrite"
 
 interface CharacterPresentation {
-  /** Additive server presentation fields. Storage ids remain authoritative for writes. */
   system_label?: string
   attribute_labels?: Record<string, string>
+  skills?: Record<string, unknown>
+  skill_labels?: Record<string, string>
+  talents?: string[]
+  equipment?: string[]
 }
 
 function attrText(value: unknown): string {
@@ -28,22 +27,18 @@ function attrText(value: unknown): string {
   return stripControlChars(String(value))
 }
 
-/** Only whole numbers are `.st`-assignable; a derived object or a text field is shown
- * but not offered as an edit box, because the command would be nonsense. */
 function isEditable(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value)
 }
 
 function send(text: string): void {
   void transportSend({ type: "input", text }).catch(() => {
-    // The transport surfaces failures through status events.
+    // Transport status owns visible delivery failures.
   })
 }
 
 type CreateMode = "roll" | "describe" | "import"
 
-/** Make a character. Rolled/staged creation uses the server-advertised profile catalog;
- * describe/import remain the existing server-owned lanes. */
 function CreateCharacter() {
   const { t } = useTranslation()
   const game = useSessionStore((s) => s.game)
@@ -104,128 +99,129 @@ function CreateCharacter() {
         : Boolean(path.trim())
 
   return (
-    <div className="play-form">
-      <div className="chip-row" role="group" aria-label={t("play.character.createMode")}>
-        {(["roll", "describe", "import"] as CreateMode[]).map((value) => (
-          <button
-            key={value}
-            type="button"
-            className={value === mode ? "primary-button" : "ghost-button"}
-            onClick={() => {
-              setMode(value)
-              if (value !== "roll") setProfile("")
+    <div className="character-create-workbench">
+      <div className="play-form character-create-main">
+        <div className="chip-row" role="group" aria-label={t("play.character.createMode")}>
+          {(["roll", "describe", "import"] as CreateMode[]).map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={value === mode ? "primary-button" : "ghost-button"}
+              onClick={() => {
+                setMode(value)
+                if (value !== "roll") setProfile("")
+              }}
+            >
+              {t(`play.character.mode.${value}`)}
+            </button>
+          ))}
+        </div>
+        <p className="studio-hint">{t(`play.character.mode.${mode}.hint`)}</p>
+
+        <label className="field">
+          {t("play.character.system")}
+          <select
+            value={chosen}
+            onChange={(event) => {
+              setSystem(event.target.value)
+              setProfile("")
             }}
           >
-            {t(`play.character.mode.${value}`)}
-          </button>
-        ))}
-      </div>
-      <p className="studio-hint">{t(`play.character.mode.${mode}.hint`)}</p>
-
-      <label className="field">
-        {t("play.character.system")}
-        <select
-          value={chosen}
-          onChange={(event) => {
-            setSystem(event.target.value)
-            setProfile("")
-          }}
-        >
-          {offered.map((entry) => (
-            <option key={entry.id} value={entry.id}>
-              {stripControlChars(entry.id)}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      {mode === "roll" && catalog?.presentation ? (
-        <div className="play-form">
-          {catalog.presentation.title ? <h4>{catalog.presentation.title}</h4> : null}
-          {catalog.presentation.description ? (
-            <p className="studio-hint">{catalog.presentation.description}</p>
-          ) : null}
-          {catalog.presentation.choice ? <p className="studio-hint">{catalog.presentation.choice}</p> : null}
-          {catalog.presentation.effect ? <p className="studio-hint">{catalog.presentation.effect}</p> : null}
-        </div>
-      ) : null}
-
-      {mode === "roll" && catalog?.requires_profile ? (
-        <label className="field">
-          {t("play.character.profile")}
-          <select value={chosenProfile} onChange={(event) => setProfile(event.target.value)}>
-            {profiles.map((entry) => (
+            {offered.map((entry) => (
               <option key={entry.id} value={entry.id}>
-                {entry.label}
+                {stripControlChars(entry.id)}
               </option>
             ))}
           </select>
         </label>
-      ) : null}
 
-      {mode === "roll" && selectedProfile ? (
-        <div className="play-form">
-          <h4>{selectedProfile.label}</h4>
-          {selectedProfile.detail?.map((text) => (
-            <p className="studio-hint" key={text}>
-              {text}
-            </p>
-          ))}
-          {selectedProfile.choices?.map((group) => (
-            <p className="studio-hint" key={group.id}>
-              <strong>{group.label}:</strong>{" "}
-              {group.options.length > 0
-                ? group.options.map((entry) => entry.label).join(" / ")
-                : t("play.character.creation.specialization")}
-            </p>
-          ))}
-          {selectedProfile.source ? <p className="studio-hint">{selectedProfile.source}</p> : null}
-        </div>
-      ) : null}
+        {mode === "roll" && catalog?.requires_profile ? (
+          <label className="field">
+            {t("play.character.profile")}
+            <select value={chosenProfile} onChange={(event) => setProfile(event.target.value)}>
+              {profiles.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
 
-      {mode === "import" ? (
-        <label className="field">
-          {t("play.character.cardPath")}
-          <input
-            value={path}
-            onChange={(event) => setPath(event.target.value)}
-            placeholder={t("play.character.cardPathPlaceholder")}
-            spellCheck={false}
-          />
-        </label>
-      ) : (
-        <label className="field">
-          {t("play.character.name")}
-          <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder={t("play.character.namePlaceholder")}
-          />
-        </label>
-      )}
+        {mode === "import" ? (
+          <label className="field">
+            {t("play.character.cardPath")}
+            <input
+              value={path}
+              onChange={(event) => setPath(event.target.value)}
+              placeholder={t("play.character.cardPathPlaceholder")}
+              spellCheck={false}
+            />
+          </label>
+        ) : (
+          <label className="field">
+            {t("play.character.name")}
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder={t("play.character.namePlaceholder")}
+            />
+          </label>
+        )}
 
-      {mode === "describe" ? (
-        <label className="field">
-          {t("play.character.description")}
-          <textarea
-            rows={4}
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder={t("play.character.descriptionPlaceholder")}
-          />
-        </label>
-      ) : null}
+        {mode === "describe" ? (
+          <label className="field">
+            {t("play.character.description")}
+            <textarea
+              rows={4}
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder={t("play.character.descriptionPlaceholder")}
+            />
+          </label>
+        ) : null}
 
-      <button type="button" className="primary-button" disabled={!online || !ready} onClick={submit}>
-        {t("play.character.create")}
-      </button>
+        <button type="button" className="primary-button" disabled={!online || !ready} onClick={submit}>
+          {t("play.character.create")}
+        </button>
+      </div>
+
+      <aside className="character-create-preview">
+        {mode === "roll" && catalog?.presentation ? (
+          <div className="play-form">
+            {catalog.presentation.title ? <h4>{catalog.presentation.title}</h4> : null}
+            {catalog.presentation.description ? (
+              <p className="studio-hint">{catalog.presentation.description}</p>
+            ) : null}
+            {catalog.presentation.choice ? <p className="studio-hint">{catalog.presentation.choice}</p> : null}
+            {catalog.presentation.effect ? <p className="studio-hint">{catalog.presentation.effect}</p> : null}
+          </div>
+        ) : null}
+
+        {mode === "roll" && selectedProfile ? (
+          <div className="play-form">
+            <h4>{selectedProfile.label}</h4>
+            {selectedProfile.detail?.map((text) => (
+              <p className="studio-hint" key={text}>
+                {text}
+              </p>
+            ))}
+            {selectedProfile.choices?.map((group) => (
+              <p className="studio-hint" key={group.id}>
+                <strong>{group.label}:</strong>{" "}
+                {group.options.length > 0
+                  ? group.options.map((entry) => entry.label).join(" / ")
+                  : t("play.character.creation.specialization")}
+              </p>
+            ))}
+            {selectedProfile.source ? <p className="studio-hint">{selectedProfile.source}</p> : null}
+          </div>
+        ) : null}
+      </aside>
     </div>
   )
 }
 
-/** One attribute row. Editing writes through `.st <name>=<value>`, which the server
- * validates against the pack's constraints and answers in the chat log — nothing is
- * assumed to have worked here; the next `state` frame is the truth. */
 function AttributeRow({ name, label, value }: { name: string; label?: string; value: unknown }) {
   const { t } = useTranslation()
   const online = useConnectionStore((s) => s.status === "online")
@@ -295,6 +291,65 @@ export default function CharacterScreen({ onBack }: { onBack: () => void }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const presented = character as (NonNullable<typeof character> & CharacterPresentation) | null
 
+  const attributeEditor = character ? (
+    <table className="play-table">
+      <tbody>
+        {Object.entries(character.attributes).map(([key, value]) => (
+          <AttributeRow
+            key={key}
+            name={key}
+            label={presented?.attribute_labels?.[key]}
+            value={value}
+          />
+        ))}
+      </tbody>
+    </table>
+  ) : null
+
+  const service = character ? (
+    <div className="play-form">
+      <p className="studio-hint">{t("play.character.editHint")}</p>
+      <div className="chip-row">
+        <button
+          type="button"
+          className="ghost-button"
+          disabled={!online}
+          title={t("play.character.finalizeHint")}
+          onClick={() => send(".st finalize")}
+        >
+          {t("play.character.finalize")}
+        </button>
+        {confirmDelete ? (
+          <>
+            <button
+              type="button"
+              className="primary-button"
+              disabled={!online}
+              onClick={() => {
+                send(".st delete")
+                setConfirmDelete(false)
+              }}
+            >
+              {t("play.character.deleteConfirm")}
+            </button>
+            <button type="button" className="ghost-button" onClick={() => setConfirmDelete(false)}>
+              {t("play.character.deleteCancel")}
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="ghost-button"
+            disabled={!online}
+            onClick={() => setConfirmDelete(true)}
+          >
+            {t("play.character.delete")}
+          </button>
+        )}
+      </div>
+    </div>
+  ) : null
+
   return (
     <ScreenShell title={t("play.menu.character")} onBack={onBack}>
       {character === null ? (
@@ -310,85 +365,43 @@ export default function CharacterScreen({ onBack }: { onBack: () => void }) {
               {stripControlChars(presented?.system_label ?? character.system)}
             </span>
           </h3>
-          <div className="play-character-meters">
-            {character.resources.map((resource) => (
-              <ResourceRow key={resource.id} resource={resource} />
-            ))}
-          </div>
 
           {creation && !creation.complete ? (
-            <CreationWizard
-              creation={creation}
-              character={{
-                attributes: character.attributes,
-                attribute_labels: presented?.attribute_labels,
-              }}
-            />
+            <>
+              <div className="play-character-meters character-resource-grid">
+                {character.resources.map((resource) => (
+                  <ResourceRow key={resource.id} resource={resource} />
+                ))}
+              </div>
+              <CreationWizard
+                creation={creation}
+                character={{
+                  attributes: character.attributes,
+                  attribute_labels: presented?.attribute_labels,
+                }}
+              />
+            </>
           ) : (
             <>
               {creation?.context && !creation.context.complete ? (
                 <CharacterContextSetup context={creation.context} />
               ) : null}
-              {character.status_effects.length > 0 ? (
-                <div className="chip-row">
-                  {character.status_effects.map((effect) => (
-                    <span key={effect} className="chip">
-                      {stripControlChars(effect)}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-              <table className="play-table">
-                <tbody>
-                  {Object.entries(character.attributes).map(([key, value]) => (
-                    <AttributeRow
-                      key={key}
-                      name={key}
-                      label={presented?.attribute_labels?.[key]}
-                      value={value}
-                    />
-                  ))}
-                </tbody>
-              </table>
-              <p className="studio-hint">{t("play.character.editHint")}</p>
-              <div className="chip-row">
-                <button
-                  type="button"
-                  className="ghost-button"
-                  disabled={!online}
-                  title={t("play.character.finalizeHint")}
-                  onClick={() => send(".st finalize")}
-                >
-                  {t("play.character.finalize")}
-                </button>
-                {confirmDelete ? (
-                  <>
-                    <button
-                      type="button"
-                      className="primary-button"
-                      disabled={!online}
-                      onClick={() => {
-                        send(".st delete")
-                        setConfirmDelete(false)
-                      }}
-                    >
-                      {t("play.character.deleteConfirm")}
-                    </button>
-                    <button type="button" className="ghost-button" onClick={() => setConfirmDelete(false)}>
-                      {t("play.character.deleteCancel")}
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    disabled={!online}
-                    onClick={() => setConfirmDelete(true)}
-                  >
-                    {t("play.character.delete")}
-                  </button>
-                )}
-              </div>
+              <CharacterSheetWorkbench
+                character={{
+                  attributes: character.attributes,
+                  resources: character.resources,
+                  status_effects: character.status_effects,
+                }}
+                presentation={{
+                  attribute_labels: presented?.attribute_labels,
+                  skills: presented?.skills,
+                  skill_labels: presented?.skill_labels,
+                  talents: presented?.talents,
+                  equipment: presented?.equipment,
+                }}
+                attributeEditor={attributeEditor}
+                service={service}
+              />
             </>
           )}
         </div>

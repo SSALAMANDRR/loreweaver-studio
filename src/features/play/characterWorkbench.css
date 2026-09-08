@@ -1,0 +1,238 @@
+/* Test-friendly character sheet / creation layout.
+   This stays system-agnostic: it only rearranges the generic rich-client surface. */
+
+.character-create-workbench {
+  width: min(1180px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.character-sheet-workbench {
+  width: min(1180px, 100%);
+}
+
+.character-create-main,
+.character-create-preview,
+.character-tab-panel,
+.character-figure-card {
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--bg-raised);
+  padding: 14px;
+}
+
+.character-create-preview {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+}
+
+.character-create-preview h4,
+.character-tab-panel h4,
+.character-figure-card h4 {
+  margin: 0;
+}
+
+/* Existing CreationWizard DOM, turned into a two-pane workbench without
+   teaching the wizard any particular ruleset. The generic summary is the
+   direct play-form containing the attribute table; active stage forms stay left. */
+.play-screen-body > .play-character > section.play-character {
+  width: min(1180px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.play-screen-body > .play-character > section.play-character > .chip-row {
+  grid-column: 1 / -1;
+}
+
+.play-screen-body > .play-character > section.play-character > .play-form:has(> .play-table) {
+  grid-column: 2;
+  grid-row: 2 / span 30;
+  position: sticky;
+  top: 0;
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--bg-raised);
+  padding: 14px;
+}
+
+.play-screen-body > .play-character > section.play-character > .play-form:not(:has(> .play-table)) {
+  grid-column: 1;
+}
+
+.character-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 4px 0 12px;
+}
+
+.character-tab-button {
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--ink-dim);
+  padding: 7px 12px;
+  font: 12px/1 var(--font-ui);
+  cursor: pointer;
+}
+
+.character-tab-button:hover,
+.character-tab-button.active {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+}
+
+.character-physical-grid {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.character-physical-grid .play-table {
+  width: 100%;
+}
+
+.character-figure-card {
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.character-figure {
+  width: 150px;
+  height: 280px;
+  position: relative;
+  opacity: 0.8;
+}
+
+.character-figure .head,
+.character-figure .torso,
+.character-figure .arm,
+.character-figure .leg {
+  position: absolute;
+  border: 1px solid var(--border);
+  background: var(--bg-inset);
+}
+
+.character-figure .head {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  left: 53px;
+  top: 6px;
+}
+
+.character-figure .torso {
+  width: 64px;
+  height: 92px;
+  border-radius: 26px 26px 12px 12px;
+  left: 43px;
+  top: 58px;
+}
+
+.character-figure .arm {
+  width: 24px;
+  height: 112px;
+  border-radius: 12px;
+  top: 66px;
+}
+
+.character-figure .arm.left {
+  left: 14px;
+  transform: rotate(8deg);
+}
+
+.character-figure .arm.right {
+  right: 14px;
+  transform: rotate(-8deg);
+}
+
+.character-figure .leg {
+  width: 28px;
+  height: 118px;
+  border-radius: 12px;
+  top: 150px;
+}
+
+.character-figure .leg.left {
+  left: 43px;
+}
+
+.character-figure .leg.right {
+  right: 43px;
+}
+
+.character-attribute-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.character-attribute-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-width: 0;
+}
+
+.character-attribute-card > span:first-child {
+  color: var(--ink-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.character-attribute-card > strong {
+  font: 600 13px/1 var(--font-mono);
+}
+
+.character-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px;
+}
+
+.character-empty-tab {
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+.character-workbench-service {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-soft);
+}
+
+@media (max-width: 900px) {
+  .character-create-workbench,
+  .play-screen-body > .play-character > section.play-character,
+  .character-physical-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .character-create-preview,
+  .play-screen-body > .play-character > section.play-character > .play-form:has(> .play-table) {
+    position: static;
+    grid-column: 1;
+    grid-row: auto;
+    max-height: none;
+  }
+}
