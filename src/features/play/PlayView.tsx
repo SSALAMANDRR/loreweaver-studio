@@ -1,6 +1,7 @@
 // Play mode: connect screen → MAIN MENU (the TUI flow — the game is one menu
 // item among character/settings and the keeper screens) → the chronicle or a
-// management screen. Esc anywhere below the menu returns to it.
+// management screen. Esc normally returns to the menu; transient screens that
+// were opened from the live game may return to that game instead.
 
 import { useEffect, useState, type FormEvent } from "react"
 import { useTranslation } from "react-i18next"
@@ -111,10 +112,16 @@ function HostLocalBlock() {
 
 function OnlineView() {
   const [screen, setScreen] = useState<PlayScreen>("menu")
+  const [characterReturnScreen, setCharacterReturnScreen] = useState<PlayScreen>("menu")
 
-  // Esc backs out of any screen to the menu — the TUI's navigation spine.
-  // The game screen keeps Esc too (its input is a plain textarea; Esc there
-  // is not otherwise meaningful).
+  const openCharacter = (returnTo: PlayScreen) => {
+    setCharacterReturnScreen(returnTo)
+    setScreen("character")
+  }
+
+  // Esc backs out using the same destination as the visible Back button. The
+  // character sheet is special only because it can be opened both from the main
+  // menu and directly from the live game header.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return
@@ -122,21 +129,31 @@ function OnlineView() {
       // preventDefault()s. InputBox does not — Esc from the chat field is
       // still the TUI's "back to the menu".
       if (event.defaultPrevented) return
-      setScreen("menu")
+      setScreen((current) => (current === "character" ? characterReturnScreen : "menu"))
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [])
+  }, [characterReturnScreen])
 
   const back = () => setScreen("menu")
 
   switch (screen) {
     case "menu":
-      return <MainMenuScreen onNavigate={setScreen} />
+      return (
+        <MainMenuScreen
+          onNavigate={(target) => {
+            if (target === "character") {
+              openCharacter("menu")
+              return
+            }
+            setScreen(target)
+          }}
+        />
+      )
     case "game":
-      return <SessionView onMenu={back} onCharacter={() => setScreen("character")} />
+      return <SessionView onMenu={back} onCharacter={() => openCharacter("game")} />
     case "character":
-      return <CharacterScreen onBack={back} />
+      return <CharacterScreen onBack={() => setScreen(characterReturnScreen)} />
     case "settings":
       return <SettingsScreen onBack={back} />
     case "keys":
