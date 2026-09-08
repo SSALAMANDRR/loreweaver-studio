@@ -6,10 +6,12 @@
   "subscriptionMissing": "此服务器尚未授权 ChatGPT。",
   "subscriptionHint": "ChatGPT 订阅通过 OpenAI 设备码登录，不需要 API 密钥或 Base URL。",
   "login": "登录 ChatGPT",
+  "relogin": "重新登录",
   "loginPending": "正在等待浏览器确认…",
   "loginOpen": "打开 OpenAI 登录页面",
   "loginReply": "服务器登录说明：{{message}}",
   "loginFailed": "登录请求未能发送。请检查连接后重试。",
+  "loginFailedCode": "授权失败：{{code}}",
   "activate": "使用 ChatGPT",
   "autoSwitchHint": "授权完成后，Studio 会自动把守秘人切换到 ChatGPT。"
 }

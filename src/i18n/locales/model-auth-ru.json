@@ -6,10 +6,12 @@
   "subscriptionMissing": "ChatGPT на этом сервере ещё не авторизован.",
   "subscriptionHint": "Подписка ChatGPT использует вход по коду устройства OpenAI. API-ключ и Base URL не нужны.",
   "login": "Войти через ChatGPT",
+  "relogin": "Войти заново",
   "loginPending": "Ожидаем подтверждение в браузере…",
   "loginOpen": "Открыть страницу входа OpenAI",
   "loginReply": "Инструкции от сервера: {{message}}",
   "loginFailed": "Не удалось отправить запрос авторизации. Проверьте соединение и повторите попытку.",
+  "loginFailedCode": "Авторизация завершилась ошибкой: {{code}}",
   "activate": "Использовать ChatGPT",
   "autoSwitchHint": "После подтверждения Studio сама переключит ведущего на ChatGPT."
 }

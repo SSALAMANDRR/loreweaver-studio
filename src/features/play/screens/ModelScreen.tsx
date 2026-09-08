@@ -12,10 +12,18 @@ import ScreenShell from "./ScreenShell"
 
 const CHATGPT_DEFAULT_MODEL = "gpt-5.4"
 const CHATGPT_DEVICE_URL = "https://auth.openai.com/codex/device"
+const CHATGPT_STATUS_PREFIX = "chatgpt:"
+const CHATGPT_ERROR_PREFIX = "chatgpt:error:"
 
 function isChatgptProvider(provider: string): boolean {
   const key = provider.trim().toLowerCase()
   return key === "chatgpt" || key === "gpt-subscription"
+}
+
+function subscriptionStatusOf(config: unknown): string {
+  if (!config || typeof config !== "object") return ""
+  const status = (config as { subscription_status?: unknown }).subscription_status
+  return typeof status === "string" ? status : ""
 }
 
 export default function ModelScreen({ onBack }: { onBack: () => void }) {
@@ -36,12 +44,24 @@ export default function ModelScreen({ onBack }: { onBack: () => void }) {
   const [oauthError, setOauthError] = useState(false)
   const desiredChatgptModel = useRef(CHATGPT_DEFAULT_MODEL)
   const autoApplied = useRef(false)
+  // A pre-existing saved token may make the first polled snapshot say
+  // `logged_in`. Do not accept that as proof of THIS login. A human device
+  // login necessarily spends time in `pending`, so observe that transition
+  // before a later success is allowed to auto-switch the live model.
+  const freshLoginObserved = useRef(false)
 
   useEffect(() => {
     refreshConfig()
   }, [refreshConfig])
 
-  const subscriptionReady = (config?.saved_providers ?? []).some(isChatgptProvider)
+  const subscriptionStatus = subscriptionStatusOf(config)
+  const loginPendingOnServer = subscriptionStatus === `${CHATGPT_STATUS_PREFIX}pending`
+  const loginSucceededOnServer = subscriptionStatus === `${CHATGPT_STATUS_PREFIX}logged_in`
+  const loginErrorCode = subscriptionStatus.startsWith(CHATGPT_ERROR_PREFIX)
+    ? subscriptionStatus.slice(CHATGPT_ERROR_PREFIX.length)
+    : ""
+  const savedSubscription = (config?.saved_providers ?? []).some(isChatgptProvider)
+  const subscriptionReady = loginSucceededOnServer || savedSubscription
   const chatgptActive =
     config !== null &&
     isChatgptProvider(config.provider) &&
@@ -77,8 +97,8 @@ export default function ModelScreen({ onBack }: { onBack: () => void }) {
   }, [entries])
 
   // Device OAuth finishes in a background task in the engine. Poll the
-  // display-safe admin snapshot until the credential book reports ChatGPT,
-  // then until the automatic model switch is visible too.
+  // display-safe admin snapshot until that exact background session reports a
+  // result, rather than treating any old saved credential as fresh success.
   useEffect(() => {
     if (!oauthPending || chatgptActive) return
     refreshConfig()
@@ -87,7 +107,23 @@ export default function ModelScreen({ onBack }: { onBack: () => void }) {
   }, [oauthPending, chatgptActive, refreshConfig])
 
   useEffect(() => {
-    if (!oauthPending || !subscriptionReady || autoApplied.current) return
+    if (oauthPending && loginPendingOnServer) freshLoginObserved.current = true
+  }, [oauthPending, loginPendingOnServer])
+
+  useEffect(() => {
+    if (!oauthPending || !loginErrorCode) return
+    setOauthPending(false)
+    setOauthError(true)
+  }, [oauthPending, loginErrorCode])
+
+  useEffect(() => {
+    if (
+      !oauthPending ||
+      !freshLoginObserved.current ||
+      !loginSucceededOnServer ||
+      autoApplied.current
+    )
+      return
     autoApplied.current = true
     const model = desiredChatgptModel.current || CHATGPT_DEFAULT_MODEL
     setProvider("chatgpt")
@@ -95,16 +131,17 @@ export default function ModelScreen({ onBack }: { onBack: () => void }) {
     setBaseUrl("")
     setApiKey("")
     setModel("chatgpt", model, undefined, "")
-  }, [oauthPending, subscriptionReady, setModel])
+  }, [oauthPending, loginSucceededOnServer, setModel])
 
   useEffect(() => {
-    if (oauthPending && chatgptActive) setOauthPending(false)
+    if (oauthPending && chatgptActive && autoApplied.current) setOauthPending(false)
   }, [oauthPending, chatgptActive])
 
-  const startChatgptLogin = async () => {
+  const startChatgptLogin = async (replaceExisting = false) => {
     const model = isChatgptProvider(provider) && chatModel.trim() ? chatModel.trim() : CHATGPT_DEFAULT_MODEL
     desiredChatgptModel.current = model
     autoApplied.current = false
+    freshLoginObserved.current = false
     setProvider("chatgpt")
     setChatModel(model)
     setBaseUrl("")
@@ -112,6 +149,12 @@ export default function ModelScreen({ onBack }: { onBack: () => void }) {
     setOauthError(false)
     setOauthPending(true)
     try {
+      // A deliberate re-login first cancels any in-flight device flow and
+      // removes the stale credential. Transport frames are processed in order,
+      // so the next login always starts from a clean subscription state.
+      if (replaceExisting) {
+        await transportSend({ type: "input", text: ".model logout chatgpt" })
+      }
       await transportSend({ type: "input", text: ".model login chatgpt" })
     } catch {
       setOauthPending(false)
@@ -140,6 +183,7 @@ export default function ModelScreen({ onBack }: { onBack: () => void }) {
 
   const catalog = modelsProvider === provider ? models : []
   const subscriptionMode = isChatgptProvider(provider)
+  const showServerLoginError = !oauthPending && Boolean(loginErrorCode)
 
   return (
     <ScreenShell title={t("play.menu.model")} onBack={onBack} showAdminError>
@@ -155,7 +199,10 @@ export default function ModelScreen({ onBack }: { onBack: () => void }) {
               : t("play.model.subscriptionMissing")}
         </p>
         <p>{t("play.model.subscriptionHint")}</p>
-        {oauthError ? <p>{t("play.model.loginFailed")}</p> : null}
+        {oauthError && !loginErrorCode ? <p>{t("play.model.loginFailed")}</p> : null}
+        {showServerLoginError ? (
+          <p>{t("play.model.loginFailedCode", { code: loginErrorCode })}</p>
+        ) : null}
         {oauthPending ? (
           <>
             <p>{t("play.model.loginPending")}</p>
@@ -171,11 +218,18 @@ export default function ModelScreen({ onBack }: { onBack: () => void }) {
           <button type="button" className="primary-button" onClick={() => void startChatgptLogin()}>
             {t("play.model.login")}
           </button>
-        ) : !chatgptActive ? (
-          <button type="button" className="primary-button" onClick={activateChatgpt}>
-            {t("play.model.activate")}
-          </button>
-        ) : null}
+        ) : (
+          <div className="button-row">
+            {!chatgptActive ? (
+              <button type="button" className="primary-button" onClick={activateChatgpt}>
+                {t("play.model.activate")}
+              </button>
+            ) : null}
+            <button type="button" className="ghost-button" onClick={() => void startChatgptLogin(true)}>
+              {t("play.model.relogin")}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="play-form">

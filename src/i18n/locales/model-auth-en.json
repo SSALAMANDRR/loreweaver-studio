@@ -6,10 +6,12 @@
   "subscriptionMissing": "ChatGPT has not been authorized on this server yet.",
   "subscriptionHint": "A ChatGPT subscription uses OpenAI device login. No API key or Base URL is required.",
   "login": "Sign in with ChatGPT",
+  "relogin": "Sign in again",
   "loginPending": "Waiting for browser confirmation…",
   "loginOpen": "Open the OpenAI login page",
   "loginReply": "Server login instructions: {{message}}",
   "loginFailed": "The login request could not be sent. Check the connection and try again.",
+  "loginFailedCode": "Authorization failed: {{code}}",
   "activate": "Use ChatGPT",
   "autoSwitchHint": "After authorization, Studio will switch the Keeper to ChatGPT automatically."
 }
