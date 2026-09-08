@@ -27,10 +27,20 @@ function richState(): StateFrame {
       resources: [],
       attributes: { WS: 44 },
       attribute_labels: { WS: "Навык Рукопашной" },
+      attribute_help: {
+        WS: "Навык Рукопашной: точность и мастерство в ближнем бою.",
+      },
       skills: { Medicae: 2, "Navigation::Варп": 1 },
       skill_labels: { Medicae: "Медицина", "Navigation::Варп": "Навигация (Варп)" },
+      skill_help: {
+        Medicae: "Медицина: первая помощь, лечение ран и диагностика.",
+        "Navigation::Варп": "Навигация: умение прокладывать путь в выбранной специализации.",
+      },
       talents: ["Вскочить", "Выучка с Оружием (Лазерное)"],
       equipment: ["Лазган", "Флак-пальто"],
+      equipment_details: {
+        Лазган: { kind: "weapon", availability: 10, source: "CH05_H076" },
+      },
       status_effects: [],
     },
   } as unknown as StateFrame
@@ -54,20 +64,36 @@ describe("CharacterScreen rich details", () => {
     useSessionStore.getState().ingest(richState())
   })
 
-  it("renders skills, talents and equipment received through state", async () => {
+  it("renders sheet data and contextual hover help received through state", async () => {
     const user = userEvent.setup()
     render(<CharacterScreen onBack={() => {}} />)
 
+    expect(screen.getByText("Навык Рукопашной")).toHaveAttribute(
+      "title",
+      expect.stringContaining("ближнем бою"),
+    )
+
     await user.click(screen.getByRole("button", { name: "Навыки" }))
-    expect(screen.getByText("Медицина")).toBeInTheDocument()
-    expect(screen.getByText("Навигация (Варп)")).toBeInTheDocument()
+    const medicae = screen.getByText("Медицина")
+    const navigation = screen.getByText("Навигация (Варп)")
+    expect(medicae.closest(".character-attribute-card")).toHaveAttribute(
+      "title",
+      expect.stringContaining("первая помощь"),
+    )
+    expect(navigation.closest(".character-attribute-card")).toHaveAttribute(
+      "title",
+      expect.stringContaining("прокладывать путь"),
+    )
 
     await user.click(screen.getByRole("button", { name: "Таланты" }))
     expect(screen.getByText("Вскочить")).toBeInTheDocument()
     expect(screen.getByText("Выучка с Оружием (Лазерное)")).toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "Снаряжение" }))
-    expect(screen.getByText("Лазган")).toBeInTheDocument()
+    const lasgun = screen.getByText("Лазган")
+    expect(lasgun).toHaveAttribute("title", expect.stringContaining("Оружие"))
+    expect(lasgun).toHaveAttribute("title", expect.stringContaining("Доступность: 10"))
+    expect(lasgun).toHaveAttribute("title", expect.stringContaining("Источник: CH05_H076"))
     expect(screen.getByText("Флак-пальто")).toBeInTheDocument()
   })
 })

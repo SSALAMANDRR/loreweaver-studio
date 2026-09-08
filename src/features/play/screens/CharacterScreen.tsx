@@ -15,10 +15,16 @@ import { sheetWrite } from "./sheetWrite"
 interface CharacterPresentation {
   system_label?: string
   attribute_labels?: Record<string, string>
+  attribute_help?: Record<string, string>
   skills?: Record<string, unknown>
   skill_labels?: Record<string, string>
+  skill_help?: Record<string, string>
   talents?: string[]
   equipment?: string[]
+  equipment_details?: Record<
+    string,
+    { kind?: string; availability?: number; source?: string; help?: string }
+  >
 }
 
 function attrText(value: unknown): string {
@@ -222,7 +228,17 @@ function CreateCharacter() {
   )
 }
 
-function AttributeRow({ name, label, value }: { name: string; label?: string; value: unknown }) {
+function AttributeRow({
+  name,
+  label,
+  help,
+  value,
+}: {
+  name: string
+  label?: string
+  help?: string
+  value: unknown
+}) {
   const { t } = useTranslation()
   const online = useConnectionStore((s) => s.status === "online")
   const [draft, setDraft] = useState<string | null>(null)
@@ -231,7 +247,7 @@ function AttributeRow({ name, label, value }: { name: string; label?: string; va
   if (!isEditable(value)) {
     return (
       <tr>
-        <td className="play-attr-name">{visibleName}</td>
+        <td className="play-attr-name" title={help}>{visibleName}</td>
         <td>{attrText(value)}</td>
       </tr>
     )
@@ -246,7 +262,7 @@ function AttributeRow({ name, label, value }: { name: string; label?: string; va
 
   return (
     <tr>
-      <td className="play-attr-name">{visibleName}</td>
+      <td className="play-attr-name" title={help}>{visibleName}</td>
       <td>
         {draft === null ? (
           <button
@@ -299,6 +315,7 @@ export default function CharacterScreen({ onBack }: { onBack: () => void }) {
             key={key}
             name={key}
             label={presented?.attribute_labels?.[key]}
+            help={presented?.attribute_help?.[key]}
             value={value}
           />
         ))}
@@ -395,10 +412,13 @@ export default function CharacterScreen({ onBack }: { onBack: () => void }) {
                 }}
                 presentation={{
                   attribute_labels: presented?.attribute_labels,
+                  attribute_help: presented?.attribute_help,
                   skills: presented?.skills,
                   skill_labels: presented?.skill_labels,
+                  skill_help: presented?.skill_help,
                   talents: presented?.talents,
                   equipment: presented?.equipment,
+                  equipment_details: presented?.equipment_details,
                 }}
                 attributeEditor={attributeEditor}
                 service={service}

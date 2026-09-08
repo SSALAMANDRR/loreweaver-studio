@@ -17,7 +17,16 @@
       "figure": "Character diagram",
       "characteristics": "Characteristics",
       "noData": "The server has not exposed this section yet. The test UI shows that explicitly instead of hiding it behind an empty screen.",
-      "noStatuses": "No active status effects."
+      "noStatuses": "No active status effects.",
+      "equipmentAvailability": "Availability: {{value}}",
+      "equipmentSource": "Source: {{source}}",
+      "equipmentKind": {
+        "weapon": "Weapon",
+        "armour": "Armour",
+        "gear": "Gear",
+        "consumable": "Consumable",
+        "ammunition": "Ammunition"
+      }
     },
     "creation": {
       "progress": "Creation step {{current}} of {{total}}",

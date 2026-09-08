@@ -134,7 +134,7 @@ function OnlineView() {
     case "menu":
       return <MainMenuScreen onNavigate={setScreen} />
     case "game":
-      return <SessionView onMenu={back} />
+      return <SessionView onMenu={back} onCharacter={() => setScreen("character")} />
     case "character":
       return <CharacterScreen onBack={back} />
     case "settings":

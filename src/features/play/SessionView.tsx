@@ -13,7 +13,13 @@ import StatusPill from "./StatusPill"
 import TurnStatus from "./TurnStatus"
 import VersionBadge from "./VersionBadge"
 
-export default function SessionView({ onMenu }: { onMenu?: () => void }) {
+export default function SessionView({
+  onMenu,
+  onCharacter,
+}: {
+  onMenu?: () => void
+  onCharacter?: () => void
+}) {
   const { t } = useTranslation()
   const welcome = useConnectionStore((s) => s.welcome)
 
@@ -24,6 +30,11 @@ export default function SessionView({ onMenu }: { onMenu?: () => void }) {
           {onMenu ? (
             <button type="button" className="ghost-button" onClick={onMenu}>
               {t("play.menuButton")}
+            </button>
+          ) : null}
+          {onCharacter ? (
+            <button type="button" className="ghost-button" onClick={onCharacter}>
+              {t("play.menu.character")}
             </button>
           ) : null}
           <span className="session-room">{welcome ? `${welcome.room} · ${welcome.you.name}` : "…"}</span>

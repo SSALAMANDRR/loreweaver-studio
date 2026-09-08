@@ -9,12 +9,22 @@ export interface WorkbenchCharacter {
   status_effects: string[]
 }
 
+export interface EquipmentDetail {
+  kind?: string
+  availability?: number
+  source?: string
+  help?: string
+}
+
 export interface WorkbenchPresentation {
   attribute_labels?: Record<string, string>
+  attribute_help?: Record<string, string>
   skills?: Record<string, unknown>
   skill_labels?: Record<string, string>
+  skill_help?: Record<string, string>
   talents?: string[]
   equipment?: string[]
+  equipment_details?: Record<string, EquipmentDetail>
 }
 
 type Tab = "physical" | "skills" | "talents" | "equipment" | "status"
@@ -61,6 +71,27 @@ export default function CharacterSheetWorkbench({
   const talents = presentation?.talents ?? []
   const equipment = presentation?.equipment ?? []
 
+  const equipmentTitle = (item: string): string | undefined => {
+    const detail = presentation?.equipment_details?.[item]
+    if (!detail) return undefined
+    const lines: string[] = []
+    if (detail.help) lines.push(detail.help)
+    if (detail.kind) {
+      lines.push(
+        t(`play.character.workbench.equipmentKind.${detail.kind}`, {
+          defaultValue: detail.kind,
+        }),
+      )
+    }
+    if (typeof detail.availability === "number") {
+      lines.push(t("play.character.workbench.equipmentAvailability", { value: detail.availability }))
+    }
+    if (detail.source) {
+      lines.push(t("play.character.workbench.equipmentSource", { source: detail.source }))
+    }
+    return lines.length > 0 ? lines.join("\n") : undefined
+  }
+
   return (
     <div className="character-sheet-workbench">
       <div>
@@ -93,7 +124,11 @@ export default function CharacterSheetWorkbench({
               {attributeEditor ?? (
                 <div className="character-attribute-grid">
                   {Object.entries(character.attributes).map(([key, value]) => (
-                    <div className="character-attribute-card" key={key}>
+                    <div
+                      className="character-attribute-card"
+                      key={key}
+                      title={presentation?.attribute_help?.[key]}
+                    >
                       <span>{presentation?.attribute_labels?.[key] ?? key}</span>
                       <strong>{text(value)}</strong>
                     </div>
@@ -111,7 +146,11 @@ export default function CharacterSheetWorkbench({
             ) : (
               <div className="character-attribute-grid">
                 {Object.entries(skills).map(([key, value]) => (
-                  <div className="character-attribute-card" key={key}>
+                  <div
+                    className="character-attribute-card"
+                    key={key}
+                    title={presentation?.skill_help?.[key]}
+                  >
                     <span>{presentation?.skill_labels?.[key] ?? key}</span>
                     <strong>{text(value)}</strong>
                   </div>
@@ -144,7 +183,7 @@ export default function CharacterSheetWorkbench({
             ) : (
               <div className="chip-row">
                 {equipment.map((item, index) => (
-                  <span className="chip" key={`${item}-${index}`}>
+                  <span className="chip" key={`${item}-${index}`} title={equipmentTitle(item)}>
                     {item}
                   </span>
                 ))}
