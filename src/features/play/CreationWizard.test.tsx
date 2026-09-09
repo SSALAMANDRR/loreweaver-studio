@@ -151,7 +151,7 @@ describe("CreationWizard", () => {
     expect(screen.getByText("Стартовый опыт")).toBeInTheDocument()
     expect(screen.getByText(/Потратьте стартовые 1000 XP/)).toBeInTheDocument()
     expect(
-      screen.getByRole("button", { name: /Характеристика.*Навык Рукопашной.*Простое.*30.*35.*250 XP/ }),
+      screen.getByRole("button", { name: /Характеристика.*Навык Рукопашной.*Простое.*30.*35.*250 опыта/ }),
     ).toBeEnabled()
   })
 
@@ -160,7 +160,7 @@ describe("CreationWizard", () => {
     render(<CreationWizard creation={advancementCreation(1000)} />)
 
     const purchase = screen.getByRole("button", {
-      name: /Навык Рукопашной.*Простое.*30.*35.*250 XP/,
+      name: /Навык Рукопашной.*Простое.*30.*35.*250 опыта/,
     })
     expect(purchase).toBeEnabled()
 
@@ -176,7 +176,7 @@ describe("CreationWizard", () => {
     render(<CreationWizard creation={advancementCreation(100)} />)
 
     expect(
-      screen.getByRole("button", { name: /Навык Рукопашной.*Простое.*30.*35.*250 XP/ }),
+      screen.getByRole("button", { name: /Навык Рукопашной.*Простое.*30.*35.*250 опыта/ }),
     ).toBeDisabled()
   })
 

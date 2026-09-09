@@ -37,6 +37,7 @@ fail() {
 [ -d "$ENGINE_REPO" ] || fail "engine repo not found at $ENGINE_REPO (clone https://github.com/1A7432/loreweaver.git or set TRPG_KP_REPO)"
 ENGINE_REPO="$(cd "$ENGINE_REPO" && pwd)"
 [ -f "$ENGINE_REPO/core/pack.py" ] || fail "$ENGINE_REPO does not look like the loreweaver engine repo (core/pack.py missing)"
+python3 "$STUDIO_ROOT/scripts/vendor_protocol.py" --check --engine "$ENGINE_REPO"
 command -v bun >/dev/null 2>&1 || fail "bun not found on PATH"
 # The fixture ships a stage-E rules-script rulepack so `has_rules_script` is
 # actually exercised, and that compiles through QuickJS at pack-BUILD time. The

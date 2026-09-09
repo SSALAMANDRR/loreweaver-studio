@@ -7,6 +7,7 @@ import { useSessionStore } from "../../../store/session"
 import CharacterContextSetup from "../CharacterContextSetup"
 import CharacterSheetWorkbench from "../CharacterSheetWorkbench"
 import CreationWizard from "../CreationWizard"
+import FinalizationPanel from "../FinalizationPanel"
 import { creationSystems, currentCreation, startCreationAction } from "../creation"
 import { ResourceRow } from "../StatePanel"
 import ScreenShell from "./ScreenShell"
@@ -21,10 +22,7 @@ interface CharacterPresentation {
   skill_help?: Record<string, string>
   talents?: string[]
   equipment?: string[]
-  equipment_details?: Record<
-    string,
-    { kind?: string; availability?: number; source?: string; help?: string }
-  >
+  equipment_details?: Record<string, { kind?: string; availability?: number; source?: string; help?: string }>
 }
 
 function attrText(value: unknown): string {
@@ -199,8 +197,12 @@ function CreateCharacter() {
             {catalog.presentation.description ? (
               <p className="studio-hint">{catalog.presentation.description}</p>
             ) : null}
-            {catalog.presentation.choice ? <p className="studio-hint">{catalog.presentation.choice}</p> : null}
-            {catalog.presentation.effect ? <p className="studio-hint">{catalog.presentation.effect}</p> : null}
+            {catalog.presentation.choice ? (
+              <p className="studio-hint">{catalog.presentation.choice}</p>
+            ) : null}
+            {catalog.presentation.effect ? (
+              <p className="studio-hint">{catalog.presentation.effect}</p>
+            ) : null}
           </div>
         ) : null}
 
@@ -247,7 +249,9 @@ function AttributeRow({
   if (!isEditable(value)) {
     return (
       <tr>
-        <td className="play-attr-name" title={help}>{visibleName}</td>
+        <td className="play-attr-name" title={help}>
+          {visibleName}
+        </td>
         <td>{attrText(value)}</td>
       </tr>
     )
@@ -262,7 +266,9 @@ function AttributeRow({
 
   return (
     <tr>
-      <td className="play-attr-name" title={help}>{visibleName}</td>
+      <td className="play-attr-name" title={help}>
+        {visibleName}
+      </td>
       <td>
         {draft === null ? (
           <button
@@ -378,11 +384,15 @@ export default function CharacterScreen({ onBack }: { onBack: () => void }) {
         <div className="play-character">
           <h3>
             {stripControlChars(character.name)}
-            <span className="desk-tag">
-              {stripControlChars(presented?.system_label ?? character.system)}
-            </span>
+            <span className="desk-tag">{stripControlChars(presented?.system_label ?? character.system)}</span>
           </h3>
 
+          <FinalizationPanel
+            key={character.name}
+            character={character.name}
+            readiness={game?.readiness}
+            finalization={game?.finalization}
+          />
           {creation && !creation.complete ? (
             <>
               <div className="play-character-meters character-resource-grid">

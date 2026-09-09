@@ -1,0 +1,32 @@
+{
+  "version": "2.4.0",
+  "archive": "loreweaver-protocol-2.4.0-e082810ad48e.tgz",
+  "typescript": "6.0.3",
+  "sha256": "e082810ad48e1a419174ec6b10ec309abf83e8e76bc4f0d49025b614099cf473",
+  "files": {
+    "LICENSE": "e60156644b1127546e755923c37a7edaf2ba057d3588c27cdd5850c28a0a1ac2",
+    "README.md": "4cb5ee22520b93d7fc66cfd020991567f84fcb7291463c2f08449788a6624957",
+    "dist/client.d.ts": "c5a94410c76f302287223e98411892d13a1cd109e9d9bc8ec38b4fca8a3ad1bd",
+    "dist/client.js": "f4a25d5bcd395cd0b9468aad6ec593aa003ab58e6889658e206a095064d28590",
+    "dist/condexpr.d.ts": "70c27d459fcd72f3075203d0bb5a4fbfff05b84cb9ce5442ffd82111d30289fd",
+    "dist/condexpr.js": "8f299f9811e3e2d47899ed7c5724c111d6e5bb41e4338fb63065a2ba71fbc76e",
+    "dist/creation.d.ts": "66d314654cd8e3fcc0b6ccfcf88b7902a202fd762387baa7a64b86a59d3eafd4",
+    "dist/creation.js": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "dist/index.d.ts": "db7ea99a2bafa5ba99334f7a298f1280f56dbd74b506a4342d3255a41d4e5832",
+    "dist/index.js": "db7ea99a2bafa5ba99334f7a298f1280f56dbd74b506a4342d3255a41d4e5832",
+    "dist/sanitize.d.ts": "737be0eb7052424fccffc0a6c477a98d6d04f2a4abc74bf75c2940aa30b321db",
+    "dist/sanitize.js": "0259471a792305ead87be2da78654f6748cc12f00db227d2c0afa31cc77a0831",
+    "dist/types.d.ts": "f2198cb80e18b045e7a1a6c638ac1d0376a9bff13faa3b90503881574c105d52",
+    "dist/types.js": "870ca468910ff734be23c10e2a63c9117f86ada0b12a827da84d6e1e274b69cb",
+    "dist/version.d.ts": "5b18df140e6916db650208bf7b73a5c984b823f7d652d155bf9430b04dacbc80",
+    "dist/version.js": "ec5bfc95f810b2d7fade68a4297ddce68853c77aa1286da6fe6ece475bc46f9b",
+    "package.json": "e447b49bf9034b4a4300e7f8d8593b7520e55e8451e23927d0b2ef6bdfd65a26",
+    "src/client.ts": "c5cf8e8bce4e9fa54ebd16589a37db3eef64f9f2160292b2a1a2f467fdd12f86",
+    "src/condexpr.ts": "835949823d5a3449f5c92a206432344806e210bdabec79c7e38f56201c2a09c2",
+    "src/creation.ts": "bb3e11e9fbac4a739a25fddd524a33c5cb45bde38382283fec9f0a913d55234d",
+    "src/index.ts": "8185def4de22f94058207c6852c964df8f8273b1ac197324e8bd8a1432883c16",
+    "src/sanitize.ts": "663da0d9c3b57a6c730d16c7bef229479596e0aab7892bdfbb2fe401b6266bd3",
+    "src/types.ts": "34a3a98af1510d8cff14c651b549cd77d5d6e85eba1159de5ca79fe1288704fc",
+    "src/version.ts": "719f9908d065982f21f3716803e0dd08f1495fcd22255a63bc670401ef59c90e"
+  }
+}

@@ -17,7 +17,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@loreweaver/protocol": "npm:loreweaver-protocol@2.3.1",
+    "@loreweaver/protocol": "file:vendor/loreweaver-protocol-2.4.0-e082810ad48e.tgz",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-dialog": "^2.7.2",
     "i18next": "^26.3.6",

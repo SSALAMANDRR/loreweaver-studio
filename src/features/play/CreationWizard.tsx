@@ -450,7 +450,7 @@ export default function CreationWizard({
               >
                 {purchase.category_label ? `${purchase.category_label} · ` : ""}
                 {purchase.label} · {purchase.stage_label ?? purchase.stage} · {purchase.current} → {purchase.next} ·{" "}
-                {purchase.cost} XP
+                {t("play.character.creation.purchaseCost", { cost: purchase.cost })}
               </button>
             ))}
           </div>

@@ -39,6 +39,7 @@
       "keep": "Keep these characteristics",
       "xp": "XP available: {{available}} · spent: {{spent}}",
       "finishXp": "Finish advancement",
+      "purchaseCost": "{{cost}} XP",
       "equipmentRemaining": "Starting acquisitions remaining: {{remaining}}",
       "currentCharacteristics": "Current characteristics",
       "currentValues": "Already granted: {{values}}",
@@ -62,6 +63,17 @@
       "contextHint": "Optional narrative context. The classic campaign premise is only one possibility; describe who the character serves, opposes, or is hiding from now.",
       "contextSave": "Save context",
       "contextSkip": "Skip"
+    },
+    "finalization": {
+      "title": "Character readiness",
+      "ready": "Ready for play",
+      "notReady": "Creation is not finished",
+      "result": "Finalization roll {{roll}}: {{label}}",
+      "roll": "Roll {{expression}} to finalize",
+      "choices": "Complete every required choice.",
+      "resolve": "Apply choices and finish creation",
+      "pending": "Waiting for the server?",
+      "failed": "The action could not be completed. Check the server message and try again."
     }
   },
   "skills": {

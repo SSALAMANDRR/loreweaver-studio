@@ -39,6 +39,7 @@
       "keep": "保留这些属性",
       "xp": "可用 XP：{{available}} · 已花费：{{spent}}",
       "finishXp": "完成成长",
+      "purchaseCost": "{{cost}} 经验",
       "equipmentRemaining": "剩余初始装备选择：{{remaining}}",
       "currentCharacteristics": "当前属性",
       "currentValues": "已获得：{{values}}",
@@ -62,6 +63,17 @@
       "contextHint": "可选的叙事背景。经典的审判庭服役只是其中一种可能；请说明角色现在效忠、反对或躲避谁。",
       "contextSave": "保存背景",
       "contextSkip": "跳过"
+    },
+    "finalization": {
+      "title": "角色就绪状态",
+      "ready": "可以开始游戏",
+      "notReady": "角色创建尚未完成",
+      "result": "最终掷骰 {{roll}}：{{label}}",
+      "roll": "掷 {{expression}} 完成创建",
+      "choices": "请完成所有必选项。",
+      "resolve": "应用选择并完成创建",
+      "pending": "正在等待服务器…",
+      "failed": "操作未完成。请查看服务器消息后重试。"
     }
   },
   "skills": {
