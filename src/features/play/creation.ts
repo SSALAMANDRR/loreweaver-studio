@@ -8,6 +8,7 @@ import type {
 
 export type {
   CreationPresentation,
+  CreationInputPresentation,
   CreationProfile,
   CreationCatalog,
   CreationEffectValue,

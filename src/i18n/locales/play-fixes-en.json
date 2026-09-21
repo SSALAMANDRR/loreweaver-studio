@@ -33,6 +33,16 @@
       "option": "Choose an option",
       "choose": "Choose…",
       "specialization": "Specialization",
+      "freeInput": {
+        "label": "Your choice: {{label}}",
+        "placeholder": "Enter your choice",
+        "description": "Enter the name or value for this choice."
+      },
+      "specializationInput": {
+        "label": "Specialization: {{label}}",
+        "placeholder": "Enter a specialization",
+        "description": "Enter only the specialization, without the option name."
+      },
       "apply": "Apply choice",
       "replacement": "Replacement {{index}}",
       "rerollHint": "You may reroll one characteristic. The second result is final.",

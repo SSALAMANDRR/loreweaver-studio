@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import i18n from "../../i18n"
 import { useConnectionStore } from "../../store/connection"
-import type { CreationState } from "./creation"
+import type { CreationInputPresentation, CreationState } from "./creation"
 import CreationWizard from "./CreationWizard"
 
 vi.mock("../../lib/transport", async (importOriginal) => {
@@ -220,5 +220,122 @@ describe("CreationWizard", () => {
 
     expect(screen.getAllByText("Цепной клинок").length).toBeGreaterThan(0)
     expect(screen.getByRole("button", { name: /Цепной клинок.*оружие.*доступность -10/ })).toBeEnabled()
+  })
+})
+
+function syntheticCreation(input?: CreationInputPresentation): CreationState {
+  return {
+    active: true,
+    complete: false,
+    profile_id: "wanderer",
+    stage_index: 0,
+    stage_count: 1,
+    completed_stages: [],
+    stage: {
+      id: "crafts",
+      kind: "layer",
+      fixed: true,
+      options: [
+        {
+          id: "artisan",
+          label: "Artisan",
+          fixed: true,
+          choices: [
+            { id: "subject", label: "Star craft", free: true, family: "StarCraft", options: [], input },
+            {
+              id: "training",
+              label: "Training",
+              free: false,
+              options: [
+                { id: "orbital", label: "Orbital craft", specialization: true, input },
+                { id: "ordinary", label: "Ordinary craft" },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  }
+}
+
+describe("generic creation text inputs", () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("en")
+    vi.mocked(transportSend).mockClear()
+    useConnectionStore.setState({ status: "online" })
+  })
+
+  it("renders server guidance accessibly for both input forms and preserves encoding", async () => {
+    const user = userEvent.setup()
+    render(
+      <CreationWizard
+        creation={syntheticCreation({
+          label: "Name your field",
+          placeholder: "For example, comet weaving",
+          description: "Enter only the field name.",
+        })}
+      />,
+    )
+    const free = screen.getByRole("textbox", { name: "Name your field" })
+    expect(free).toHaveAttribute("placeholder", "For example, comet weaving")
+    expect(free).toHaveAccessibleDescription("Enter only the field name.")
+    const submit = screen.getByRole("button", { name: "Apply choice" })
+    expect(submit).toBeDisabled()
+    await user.type(free, "Comet weaving")
+    await user.selectOptions(screen.getByLabelText("Training"), "orbital")
+    const fields = screen.getAllByRole("textbox", { name: "Name your field" })
+    expect(fields).toHaveLength(2)
+    expect(fields[1]).toHaveAttribute("placeholder", "For example, comet weaving")
+    expect(fields[1]).toHaveAccessibleDescription("Enter only the field name.")
+    const descriptions = fields.map((field) => field.getAttribute("aria-describedby"))
+    expect(new Set(descriptions).size).toBe(2)
+    for (const id of descriptions) {
+      expect(document.getElementById(id!)).toHaveTextContent("Enter only the field name.")
+    }
+    await user.type(fields[1], "   ")
+    expect(submit).toBeDisabled()
+    await user.type(fields[1], "Moon glass   ")
+    await user.click(submit)
+    expect(transportSend).toHaveBeenCalledWith({
+      type: "input",
+      text: ".__creation_action create subject=Comet weaving | training=orbital::Moon glass",
+    })
+  })
+
+  it.each(["en", "ru", "zh"])("localizes generic fallbacks without pack metadata (%s)", async (locale) => {
+    await i18n.changeLanguage(locale)
+    const user = userEvent.setup()
+    render(<CreationWizard creation={syntheticCreation()} />)
+    const free = screen.getByRole("textbox", {
+      name: i18n.t("play.character.creation.freeInput.label", { label: "Star craft" }),
+    })
+    expect(free).toHaveAttribute("placeholder", i18n.t("play.character.creation.freeInput.placeholder"))
+    expect(free).toHaveAccessibleDescription(i18n.t("play.character.creation.freeInput.description"))
+    await user.selectOptions(screen.getByLabelText("Training"), "orbital")
+    const specialization = screen.getByRole("textbox", {
+      name: i18n.t("play.character.creation.specializationInput.label", { label: "Orbital craft" }),
+    })
+    expect(specialization).toHaveAttribute(
+      "placeholder",
+      i18n.t("play.character.creation.specializationInput.placeholder"),
+    )
+    expect(specialization).toHaveAccessibleDescription(
+      i18n.t("play.character.creation.specializationInput.description"),
+    )
+    await user.selectOptions(screen.getByLabelText("Training"), "ordinary")
+    expect(screen.getAllByRole("textbox")).toHaveLength(1)
+    await user.type(free, "Glass")
+    await user.click(screen.getByRole("button", { name: i18n.t("play.character.creation.apply") }))
+    expect(transportSend).toHaveBeenCalledWith({
+      type: "input",
+      text: ".__creation_action create subject=Glass | training=ordinary",
+    })
+  })
+
+  it("falls back per missing presentation field", () => {
+    render(<CreationWizard creation={syntheticCreation({ label: "Custom subject" })} />)
+    const input = screen.getByRole("textbox", { name: "Custom subject" })
+    expect(input).toHaveAttribute("placeholder", "Enter your choice")
+    expect(input).toHaveAccessibleDescription("Enter the name or value for this choice.")
   })
 })

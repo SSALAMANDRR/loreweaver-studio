@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useId, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { transportSend } from "../../lib/transport"
 import { useConnectionStore } from "../../store/connection"
@@ -11,6 +11,7 @@ import {
   type CreationChoiceGroup,
   type CreationEffect,
   type CreationPresentation,
+  type CreationInputPresentation,
   type CreationState,
 } from "./creation"
 
@@ -114,6 +115,39 @@ function groupValue(
   return specialization ? `${selected}::${specialization}` : ""
 }
 
+function CreationTextInput({
+  input,
+  label,
+  specialization = false,
+  value,
+  onChange,
+}: {
+  input?: CreationInputPresentation
+  label: string
+  specialization?: boolean
+  value: string
+  onChange: (value: string) => void
+}) {
+  const { t } = useTranslation()
+  const id = useId()
+  const fallback = specialization ? "specializationInput" : "freeInput"
+  return (
+    <div className="field">
+      <label htmlFor={id}>{input?.label || t(`play.character.creation.${fallback}.label`, { label })}</label>
+      <input
+        id={id}
+        value={value}
+        placeholder={input?.placeholder || t(`play.character.creation.${fallback}.placeholder`)}
+        aria-describedby={`${id}-description`}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <p id={`${id}-description`} className="studio-hint">
+        {input?.description || t(`play.character.creation.${fallback}.description`)}
+      </p>
+    </div>
+  )
+}
+
 function LayerStage({ creation }: { creation: CreationState }) {
   const { t } = useTranslation()
   const online = useConnectionStore((s) => s.status === "online")
@@ -178,15 +212,12 @@ function LayerStage({ creation }: { creation: CreationState }) {
         return (
           <div key={group.id} className="play-form">
             {group.free ? (
-              <label className="field">
-                {group.label}
-                <input
-                  value={selected}
-                  onChange={(event) =>
-                    setChoices((current) => ({ ...current, [group.id]: event.target.value }))
-                  }
-                />
-              </label>
+              <CreationTextInput
+                input={group.input}
+                label={group.label}
+                value={selected}
+                onChange={(value) => setChoices((current) => ({ ...current, [group.id]: value }))}
+              />
             ) : (
               <label className="field">
                 {group.label}
@@ -206,15 +237,13 @@ function LayerStage({ creation }: { creation: CreationState }) {
               </label>
             )}
             {selectedOption?.specialization ? (
-              <label className="field">
-                {t("play.character.creation.specialization")}
-                <input
-                  value={specializations[group.id] ?? ""}
-                  onChange={(event) =>
-                    setSpecializations((current) => ({ ...current, [group.id]: event.target.value }))
-                  }
-                />
-              </label>
+              <CreationTextInput
+                input={selectedOption.input}
+                label={selectedOption.label}
+                specialization
+                value={specializations[group.id] ?? ""}
+                onChange={(value) => setSpecializations((current) => ({ ...current, [group.id]: value }))}
+              />
             ) : null}
             <EffectSummary effect={selectedOption?.effect} />
           </div>

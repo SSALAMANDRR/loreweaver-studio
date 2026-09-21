@@ -33,6 +33,16 @@
       "option": "选择一个选项",
       "choose": "请选择…",
       "specialization": "专精",
+      "freeInput": {
+        "label": "你的选择：{{label}}",
+        "placeholder": "输入你的选择",
+        "description": "输入此选项的名称或值。"
+      },
+      "specializationInput": {
+        "label": "专精：{{label}}",
+        "placeholder": "输入专精",
+        "description": "仅输入专精，不要包含选项名称。"
+      },
       "apply": "应用选择",
       "replacement": "替换 {{index}}",
       "rerollHint": "你可以重掷一个属性。第二次结果为最终结果。",
