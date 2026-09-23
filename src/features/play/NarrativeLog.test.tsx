@@ -30,6 +30,38 @@ describe("NarrativeLog", () => {
     expect(screen.getByText(/4 → 3/)).toBeInTheDocument()
   })
 
+  it("renders a player-grade projected result without inventing hidden NPC values", () => {
+    ingest({
+      type: "action_result", id: "r2", ok: true, validation_failure: null,
+      labels: { action: "Server attack", mode: "single", weapon: "Server weapon", locations: { body: "Server body" }, reaction: "Server parry" },
+      result: {
+        actor: "Ada", target: "Beast", action: "custom", weapon_instance_id: "i1", weapon_profile_id: "p1",
+        attack_target: 60, attack_roll: 20, success: true, margin: 4, degrees: 4, hit_location: "body",
+        reaction: { type: "parry", roll: 70, success: false }, raw_damage: 11, penetration: 0,
+        armour_before: null, armour_after_penetration: null, tb_reduction: null, final_damage: 5,
+        ammo_before: null, ammo_after: null, state_delta: { target_damage_after: null },
+        validation_failure: null, hits: [{ location: "body", raw_damage: 11, armour_after_penetration: null, tb_reduction: null, final_damage: 5 }], shots_fired: 0,
+      },
+    } as ActionResultFrame)
+    ingest({
+      type: "action_result", id: "r3", ok: true, validation_failure: null,
+      result: {
+        actor: "", target: "Ada", action: "custom", weapon_instance_id: "", weapon_profile_id: "p1",
+        attack_target: null, attack_roll: 7, success: true, margin: 2, degrees: 2, hit_location: "body",
+        reaction: null, raw_damage: null, penetration: null, armour_before: null, armour_after_penetration: null,
+        tb_reduction: null, final_damage: 0, ammo_before: null, ammo_after: null, state_delta: null,
+        validation_failure: null, hits: [], shots_fired: 0,
+        pending_reaction: { id: "p", attacker: "", defender: "Ada", action: "custom", mode: "single", hit_count: 1 },
+      },
+    } as ActionResultFrame)
+    render(<NarrativeLog />)
+    expect(screen.getByText(/Hit 1: Server body · Damage: 5$/)).toBeInTheDocument()
+    expect(screen.getByText(/Server parry · 70 · Failure/)).toBeInTheDocument()
+    expect(screen.queryByText(/null|undefined/)).not.toBeInTheDocument()
+    expect(screen.getByText("Waiting for Ada to react.")).toBeInTheDocument()
+    expect(screen.getByText(/Unseen attacker → Ada/)).toBeInTheDocument()
+  })
+
   it("renders markdown narrative as rich text", () => {
     ingest({
       type: "narrative",

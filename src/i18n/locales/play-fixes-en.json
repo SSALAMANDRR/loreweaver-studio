@@ -7,7 +7,6 @@
     "weapon": "Weapon",
     "target": "Target",
     "reaction": "Reaction",
-    "none": "None",
     "distance": "Distance",
     "submit": "Resolve action",
     "result": "Combat result",
@@ -20,7 +19,14 @@
     "degrees": "Degrees",
     "hitNumber": "Hit {{number}}",
     "damage": "Damage",
-    "ammo": "Ammo"
+    "ammo": "Ammo",
+    "order": "Initiative order",
+    "round": "Round {{round}}",
+    "you": "you",
+    "hiddenTurn": "An unseen combatant is acting.",
+    "awaitingReaction": "Waiting for {{defender}} to react.",
+    "reactionPrompt": "{{actor}} is hit by {{attacker}} ({{action}}). Choose a reaction.",
+    "unknownAttacker": "Unseen attacker"
   },
   "character": {
     "profile": "Creation profile (if required)",

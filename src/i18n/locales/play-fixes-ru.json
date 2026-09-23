@@ -7,7 +7,6 @@
     "weapon": "Оружие",
     "target": "Цель",
     "reaction": "Реакция",
-    "none": "Нет",
     "distance": "Расстояние",
     "submit": "Выполнить действие",
     "result": "Результат боя",
@@ -20,7 +19,14 @@
     "degrees": "Степени",
     "hitNumber": "Попадание {{number}}",
     "damage": "Урон",
-    "ammo": "Патроны"
+    "ammo": "Патроны",
+    "order": "Порядок инициативы",
+    "round": "Раунд {{round}}",
+    "you": "вы",
+    "hiddenTurn": "Действует невидимый боец.",
+    "awaitingReaction": "Ожидается реакция: {{defender}}.",
+    "reactionPrompt": "{{attacker}} попадает по {{actor}} ({{action}}). Выберите реакцию.",
+    "unknownAttacker": "Невидимый противник"
   },
   "character": {
     "profile": "Профиль создания (если нужен)",

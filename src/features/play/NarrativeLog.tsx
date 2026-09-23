@@ -80,15 +80,26 @@ function ActionResultEntry({ frame }: { frame: ActionResultFrame }) {
     return <div className="system-line level-error" role="status">{t("combat.invalid", { reason: stripControlChars(frame.validation_failure ?? "") })}</div>
   }
   const result = frame.result
+  const actor = stripControlChars(result.actor) || t("combat.unknownAttacker")
+  const target = stripControlChars(result.target)
+  const weapon = stripControlChars(frame.labels?.weapon ?? result.weapon_profile_id)
+  const reaction = result.reaction
+  const declined = reaction?.declined === true
+  const hasRoll = result.attack_roll !== null
   return <article className="log-entry combat-result" aria-label={t("combat.result")}>
     <header className="entry-speaker">{t("combat.result")}</header>
     <div className="entry-body">
-      <p>{stripControlChars(result.actor)} → {stripControlChars(result.target || result.actor)} · {stripControlChars(frame.labels?.action ?? result.action)} · {stripControlChars(frame.labels?.weapon ?? result.weapon_profile_id)}</p>
-      {result.attack_roll !== null ? <p>{t("combat.roll")}: {result.attack_roll} / {result.attack_target} · {result.success ? t("combat.hit") : t("combat.miss")} · {t("combat.degrees")}: {result.degrees}</p> : null}
-      {result.hits.map((hit, index) => <p key={index}>{t("combat.hitNumber", { number: index + 1 })}: {stripControlChars(frame.labels?.locations[String(hit.location)] ?? String(hit.location ?? ""))} · {t("combat.damage")}: {String(hit.raw_damage)} − {String(hit.armour_after_penetration)} − {String(hit.tb_reduction)} = {String(hit.final_damage)}</p>)}
-      {result.reaction ? <p>{t("combat.reaction")}: {stripControlChars(frame.labels?.reaction ?? String(result.reaction.type ?? ""))} · {String(result.reaction.roll)} / {String(result.reaction.target)} · {result.reaction.success ? t("combat.success") : t("combat.failure")}</p> : null}
+      <p>{actor}{target ? ` → ${target}` : ""} · {stripControlChars(frame.labels?.action ?? result.action)}{weapon ? ` · ${weapon}` : ""}</p>
+      {hasRoll ? <p>{t("combat.roll")}: {result.attack_roll}{result.attack_target !== null ? ` / ${result.attack_target}` : ""} · {result.success ? t("combat.hit") : t("combat.miss")} · {t("combat.degrees")}: {result.degrees}</p> : null}
+      {result.pending_reaction ? <p role="status">{t("combat.awaitingReaction", { defender: result.pending_reaction.defender })}</p> : null}
+      {result.hits.map((hit, index) => {
+        const location = stripControlChars(frame.labels?.locations[String(hit.location)] ?? String(hit.location ?? ""))
+        const mitigated = hit.armour_after_penetration !== null && hit.tb_reduction !== null
+        return <p key={index}>{t("combat.hitNumber", { number: index + 1 })}: {location} · {t("combat.damage")}: {mitigated ? `${String(hit.raw_damage)} − ${String(hit.armour_after_penetration)} − ${String(hit.tb_reduction)} = ` : ""}{String(hit.final_damage)}</p>
+      })}
+      {reaction ? <p>{t("combat.reaction")}: {stripControlChars(frame.labels?.reaction ?? String(reaction.type ?? ""))}{declined ? "" : ` · ${String(reaction.roll)}${reaction.target !== undefined ? ` / ${String(reaction.target)}` : ""} · ${reaction.success ? t("combat.success") : t("combat.failure")}`}</p> : null}
       {result.ammo_before !== null ? <p>{t("combat.ammo")}: {result.ammo_before} → {result.ammo_after}</p> : null}
-      <p>{t("combat.damage")}: {result.final_damage}</p>
+      {hasRoll && !result.pending_reaction ? <p>{t("combat.damage")}: {result.final_damage}</p> : null}
     </div>
   </article>
 }

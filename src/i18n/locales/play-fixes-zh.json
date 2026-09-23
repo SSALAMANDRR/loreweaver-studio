@@ -7,7 +7,6 @@
     "weapon": "武器",
     "target": "目标",
     "reaction": "反应",
-    "none": "无",
     "distance": "距离",
     "submit": "结算行动",
     "result": "战斗结果",
@@ -20,7 +19,14 @@
     "degrees": "成功度",
     "hitNumber": "命中 {{number}}",
     "damage": "伤害",
-    "ammo": "弹药"
+    "ammo": "弹药",
+    "order": "先攻顺序",
+    "round": "第 {{round}} 轮",
+    "you": "你",
+    "hiddenTurn": "一名看不见的战斗者正在行动。",
+    "awaitingReaction": "等待 {{defender}} 作出反应。",
+    "reactionPrompt": "{{actor}} 被 {{attacker}} 击中（{{action}}）。请选择反应。",
+    "unknownAttacker": "看不见的攻击者"
   },
   "character": {
     "profile": "创建档案（如系统要求）",
