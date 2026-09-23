@@ -1,5 +1,27 @@
 {
   "rolePlayer": "Игрок",
+  "combat": {
+    "title": "Бой",
+    "action": "Действие",
+    "mode": "Режим",
+    "weapon": "Оружие",
+    "target": "Цель",
+    "reaction": "Реакция",
+    "none": "Нет",
+    "distance": "Расстояние",
+    "submit": "Выполнить действие",
+    "result": "Результат боя",
+    "invalid": "Действие отклонено: {{reason}}",
+    "roll": "Бросок / цель",
+    "hit": "Попадание",
+    "miss": "Промах",
+    "success": "Успех",
+    "failure": "Неудача",
+    "degrees": "Степени",
+    "hitNumber": "Попадание {{number}}",
+    "damage": "Урон",
+    "ammo": "Патроны"
+  },
   "character": {
     "profile": "Профиль создания (если нужен)",
     "profilePlaceholder": "ID или название профиля",

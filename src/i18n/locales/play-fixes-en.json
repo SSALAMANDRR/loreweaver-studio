@@ -1,5 +1,27 @@
 {
   "rolePlayer": "Player",
+  "combat": {
+    "title": "Combat",
+    "action": "Action",
+    "mode": "Mode",
+    "weapon": "Weapon",
+    "target": "Target",
+    "reaction": "Reaction",
+    "none": "None",
+    "distance": "Distance",
+    "submit": "Resolve action",
+    "result": "Combat result",
+    "invalid": "Action refused: {{reason}}",
+    "roll": "Roll / target",
+    "hit": "Hit",
+    "miss": "Miss",
+    "success": "Success",
+    "failure": "Failure",
+    "degrees": "Degrees",
+    "hitNumber": "Hit {{number}}",
+    "damage": "Damage",
+    "ammo": "Ammo"
+  },
   "character": {
     "profile": "Creation profile (if required)",
     "profilePlaceholder": "profile id or name",

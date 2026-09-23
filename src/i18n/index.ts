@@ -23,6 +23,7 @@ const STORAGE_KEY = "lw-lang"
 
 const enMerged = {
   ...en,
+  combat: playFixesEn.combat,
   manualRoll: manualRollEn,
   play: {
     ...en.play,
@@ -50,6 +51,7 @@ const enMerged = {
 
 const ruMerged = {
   ...ru,
+  combat: playFixesRu.combat,
   manualRoll: manualRollRu,
   play: {
     ...ru.play,
@@ -85,6 +87,7 @@ const ruMerged = {
 
 const zhMerged = {
   ...zh,
+  combat: playFixesZh.combat,
   manualRoll: manualRollZh,
   play: {
     ...zh.play,

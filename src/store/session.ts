@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { FrameType } from "@loreweaver/protocol"
 import type {
+  ActionResultFrame,
   DiceFrame,
   ErrorFrame,
   NarrativeDeltaFrame,
@@ -54,6 +55,7 @@ export interface PendingEcho {
 }
 
 export type LogEntry =
+  | { seq: number; kind: "action_result"; frame: ActionResultFrame }
   | { seq: number; kind: "narrative"; frame: NarrativeFrame; draft?: boolean }
   | { seq: number; kind: "dice"; frame: DiceFrame }
   | { seq: number; kind: "system"; frame: SystemFrame }
@@ -288,6 +290,9 @@ export const useSessionStore = create<SessionState>((set) => ({
         return
       case "dice":
         set((s) => ({ entries: pushEntry(s.entries, { kind: "dice", frame }) }))
+        return
+      case "action_result":
+        set((s) => ({ entries: pushEntry(s.entries, { kind: "action_result", frame }) }))
         return
       case "system":
         set((s) => ({ entries: pushEntry(s.entries, { kind: "system", frame }) }))

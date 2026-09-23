@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react"
+import type { ActionResultFrame } from "@loreweaver/protocol"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import "../../i18n"
 import { PENDING_ECHO_TIMEOUT_MS, useSessionStore } from "../../store/session"
@@ -8,6 +9,26 @@ const ingest = useSessionStore.getState().ingest
 
 describe("NarrativeLog", () => {
   beforeEach(() => useSessionStore.getState().clear())
+
+  it("renders server-authored combat damage, ammo and reaction without recomputing", () => {
+    ingest({
+      type: "action_result", id: "r1", ok: true, validation_failure: null,
+      labels: { action: "Server attack", mode: "single", weapon: "Server weapon", locations: { body: "Server body" }, reaction: "Server dodge" },
+      result: {
+        actor: "Ada", target: "Beast", action: "custom", weapon_instance_id: "i1", weapon_profile_id: "p1",
+        attack_target: 60, attack_roll: 20, success: true, margin: 4, degrees: 4, hit_location: "body",
+        reaction: { type: "dodge", roll: 70, target: 40, success: false }, raw_damage: 11, penetration: 0,
+        armour_before: 3, armour_after_penetration: 3, tb_reduction: 5, final_damage: 3,
+        ammo_before: 4, ammo_after: 3, state_delta: { ammo_before: 4, ammo_after: 3 },
+        validation_failure: null, hits: [{ location: "body", raw_damage: 11, armour_after_penetration: 3, tb_reduction: 5, final_damage: 3 }], shots_fired: 1,
+      },
+    } as ActionResultFrame)
+    render(<NarrativeLog />)
+    expect(screen.getByText(/Server attack/)).toBeInTheDocument()
+    expect(screen.getByText(/Server body/)).toBeInTheDocument()
+    expect(screen.getByText(/Server dodge/)).toBeInTheDocument()
+    expect(screen.getByText(/4 → 3/)).toBeInTheDocument()
+  })
 
   it("renders markdown narrative as rich text", () => {
     ingest({

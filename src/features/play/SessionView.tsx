@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import { useConnectionStore } from "../../store/connection"
 import { quitTable } from "../../store/hostLocal"
 import InputBox from "./InputBox"
+import CombatActionPanel from "./CombatActionPanel"
 import ManualRollCard from "./ManualRollCard"
 import NarrativeLog from "./NarrativeLog"
 import { PanelSidebar, PanelTray } from "./panels/PanelDeck"
@@ -50,6 +51,7 @@ export default function SessionView({
         <NarrativeLog />
         <PanelTray />
         <ManualRollCard />
+        <CombatActionPanel />
         <InputBox />
       </div>
       <aside className="desk-pane">

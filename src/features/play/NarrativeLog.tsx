@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import {
   stripControlChars,
+  type ActionResultFrame,
   type ErrorFrame,
   type NarrativeFrame,
   type SystemFrame,
@@ -73,12 +74,33 @@ function ErrorEntry({ frame }: { frame: ErrorFrame }) {
   )
 }
 
+function ActionResultEntry({ frame }: { frame: ActionResultFrame }) {
+  const { t } = useTranslation()
+  if (!frame.ok || !frame.result) {
+    return <div className="system-line level-error" role="status">{t("combat.invalid", { reason: stripControlChars(frame.validation_failure ?? "") })}</div>
+  }
+  const result = frame.result
+  return <article className="log-entry combat-result" aria-label={t("combat.result")}>
+    <header className="entry-speaker">{t("combat.result")}</header>
+    <div className="entry-body">
+      <p>{stripControlChars(result.actor)} → {stripControlChars(result.target || result.actor)} · {stripControlChars(frame.labels?.action ?? result.action)} · {stripControlChars(frame.labels?.weapon ?? result.weapon_profile_id)}</p>
+      {result.attack_roll !== null ? <p>{t("combat.roll")}: {result.attack_roll} / {result.attack_target} · {result.success ? t("combat.hit") : t("combat.miss")} · {t("combat.degrees")}: {result.degrees}</p> : null}
+      {result.hits.map((hit, index) => <p key={index}>{t("combat.hitNumber", { number: index + 1 })}: {stripControlChars(frame.labels?.locations[String(hit.location)] ?? String(hit.location ?? ""))} · {t("combat.damage")}: {String(hit.raw_damage)} − {String(hit.armour_after_penetration)} − {String(hit.tb_reduction)} = {String(hit.final_damage)}</p>)}
+      {result.reaction ? <p>{t("combat.reaction")}: {stripControlChars(frame.labels?.reaction ?? String(result.reaction.type ?? ""))} · {String(result.reaction.roll)} / {String(result.reaction.target)} · {result.reaction.success ? t("combat.success") : t("combat.failure")}</p> : null}
+      {result.ammo_before !== null ? <p>{t("combat.ammo")}: {result.ammo_before} → {result.ammo_after}</p> : null}
+      <p>{t("combat.damage")}: {result.final_damage}</p>
+    </div>
+  </article>
+}
+
 function Entry({ entry }: { entry: LogEntry }) {
   switch (entry.kind) {
     case "narrative":
       return <NarrativeEntry frame={entry.frame} draft={entry.draft} />
     case "dice":
       return <DiceLine frame={entry.frame} />
+    case "action_result":
+      return <ActionResultEntry frame={entry.frame} />
     case "system":
       return <SystemEntry frame={entry.frame} />
     case "error":
