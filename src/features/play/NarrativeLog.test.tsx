@@ -77,6 +77,23 @@ describe("NarrativeLog", () => {
     expect(screen.getByText("An unseen combatant is out of the fight.")).toBeInTheDocument()
   })
 
+  it("marks player-entered rolls as such, exactly as the server reported", () => {
+    ingest({
+      type: "action_result", id: "m1", ok: true, validation_failure: null,
+      result: {
+        actor: "Ada", target: "Beast", action: "custom", weapon_instance_id: "i1", weapon_profile_id: "p1",
+        attack_target: 60, attack_roll: 57, success: true, margin: 1, degrees: 1, hit_location: "body",
+        reaction: { type: "dodge", roll: 34, target: 40, success: true }, raw_damage: null, penetration: null,
+        armour_before: null, armour_after_penetration: null, tb_reduction: null, final_damage: 0,
+        ammo_before: null, ammo_after: null, state_delta: null, validation_failure: null, hits: [], shots_fired: 0,
+        roll_sources: { attack: "manual", reaction: "server" },
+      },
+    } as ActionResultFrame)
+    render(<NarrativeLog />)
+    expect(screen.getByText(/57 \(entered by player\) \/ 60/)).toBeInTheDocument()
+    expect(screen.queryByText(/34 \(entered by player\)/)).not.toBeInTheDocument()
+  })
+
   it("renders markdown narrative as rich text", () => {
     ingest({
       type: "narrative",

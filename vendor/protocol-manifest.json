@@ -1,11 +1,11 @@
 {
-  "version": "2.7.1",
-  "archive": "loreweaver-protocol-2.7.1-72bbdcf0e9ac.tgz",
+  "version": "2.8.0",
+  "archive": "loreweaver-protocol-2.8.0-4546db5a42f2.tgz",
   "typescript": "6.0.3",
-  "sha256": "72bbdcf0e9ace987c4e3a242f07b9c3b17b74c67b81b2a393d9e280f0eec37e8",
+  "sha256": "4546db5a42f2aea2fadb627febb3fcb9b52821d4cca6ff97c19f4b5dc83094d8",
   "files": {
     "LICENSE": "e60156644b1127546e755923c37a7edaf2ba057d3588c27cdd5850c28a0a1ac2",
-    "README.md": "67e83107b874e990d9b0a78c2cabf1e5ad09b717dac17f067dae2dbc4077cd1e",
+    "README.md": "386f0d01d41649dd845d8852ff3ddddb3f8079c25ec96579ecc58ab946daa1c6",
     "dist/client.d.ts": "c5a94410c76f302287223e98411892d13a1cd109e9d9bc8ec38b4fca8a3ad1bd",
     "dist/client.js": "63501c180e0d537c78b8344d99a331ece72942da5ea18766ecfbc32921806bc0",
     "dist/condexpr.d.ts": "70c27d459fcd72f3075203d0bb5a4fbfff05b84cb9ce5442ffd82111d30289fd",
@@ -16,17 +16,17 @@
     "dist/index.js": "db7ea99a2bafa5ba99334f7a298f1280f56dbd74b506a4342d3255a41d4e5832",
     "dist/sanitize.d.ts": "737be0eb7052424fccffc0a6c477a98d6d04f2a4abc74bf75c2940aa30b321db",
     "dist/sanitize.js": "0259471a792305ead87be2da78654f6748cc12f00db227d2c0afa31cc77a0831",
-    "dist/types.d.ts": "6c6674096db73616ef97a0002f7caaf90f847f28bffe4334f9d3258e9d567e54",
-    "dist/types.js": "3fb52e56a6f173e8d222e0bc1974f2defbf5805c9c730580ec2aaa8506a1c48b",
+    "dist/types.d.ts": "faaed909f04c4fa78bcaf0e702dd5d0f8e14b6a9fd7fa9b8e13f35438effdbcb",
+    "dist/types.js": "17dff8d786ab07dba2141ec1f237f464f2e7416251940584e5dd58851804ae0d",
     "dist/version.d.ts": "5b18df140e6916db650208bf7b73a5c984b823f7d652d155bf9430b04dacbc80",
     "dist/version.js": "ec5bfc95f810b2d7fade68a4297ddce68853c77aa1286da6fe6ece475bc46f9b",
-    "package.json": "19df3754c4d1798a131727ed57ce1e1fab213ffdf9336416adf12089c602dab9",
+    "package.json": "a69c47d178fbcbfffa7d30ee83d423a3ea3ea0b3f956e1afcb0cdd7428cc14d4",
     "src/client.ts": "44419df2b95fa57406a939fea9b8b6db5674eb01121d33f26c41c0891b1f9be3",
     "src/condexpr.ts": "835949823d5a3449f5c92a206432344806e210bdabec79c7e38f56201c2a09c2",
     "src/creation.ts": "1947ea164541f3b19715591d0d028f00aa1d68ec4094076e5c8f10747f5a6b43",
     "src/index.ts": "8185def4de22f94058207c6852c964df8f8273b1ac197324e8bd8a1432883c16",
     "src/sanitize.ts": "663da0d9c3b57a6c730d16c7bef229479596e0aab7892bdfbb2fe401b6266bd3",
-    "src/types.ts": "352a060fd462c601f171c025125f1a4b6adb23f4519ed82b73d4dd038b3cb800",
+    "src/types.ts": "84b8fb88e4a01980f53992f7823819971b85f11b5c0cb264712c87b690337f72",
     "src/version.ts": "719f9908d065982f21f3716803e0dd08f1495fcd22255a63bc670401ef59c90e"
   }
 }

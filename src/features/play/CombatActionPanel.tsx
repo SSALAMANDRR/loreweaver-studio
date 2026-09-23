@@ -6,10 +6,13 @@ import type {
   CombatEncounterView,
   CombatReactionOffer,
   CombatSurface,
+  ManualRollSpec,
 } from "@loreweaver/protocol"
 import { transportSend } from "../../lib/transport"
 import { useConnectionStore } from "../../store/connection"
 import { useSessionStore } from "../../store/session"
+import ManualDiceFields from "./ManualDiceFields"
+import { manualFaces, type DiceValues } from "./manualDice"
 
 function send(frame: ActionRequestFrame, done: () => void) {
   void transportSend(frame)
@@ -45,10 +48,30 @@ function EncounterOrder({ state }: { state: CombatEncounterView }) {
 }
 
 /** Shown only when the server authorised THIS viewer to answer the pending attack. */
-function ReactionPrompt({ offer, online }: { offer: CombatReactionOffer; online: boolean }) {
+function ReactionPrompt({
+  offer,
+  online,
+  manual,
+}: {
+  offer: CombatReactionOffer
+  online: boolean
+  manual: boolean
+}) {
   const { t } = useTranslation()
   const [sending, setSending] = useState(false)
-  const choose = (choice: string) => {
+  const [dice, setDice] = useState<DiceValues>({})
+  // Every roll a choice may need, once per id; each choice sends only its own.
+  const specs: ManualRollSpec[] = []
+  for (const choice of offer.choices) {
+    for (const spec of choice.manual_rolls ?? []) {
+      if (!specs.some((known) => known.id === spec.id)) specs.push(spec)
+    }
+  }
+  const facesFor = (choice: CombatReactionOffer["choices"][number]) =>
+    manual ? manualFaces(choice.manual_rolls ?? [], dice) : null
+  const choose = (choice: CombatReactionOffer["choices"][number]) => {
+    const faces = facesFor(choice)
+    if (manual && faces === null) return
     setSending(true)
     send(
       {
@@ -56,8 +79,9 @@ function ReactionPrompt({ offer, online }: { offer: CombatReactionOffer; online:
         id: crypto.randomUUID(),
         actor: offer.actor,
         action: CombatAction.Reaction,
-        mode: choice,
+        mode: choice.id,
         pending_id: offer.id,
+        ...(manual ? { roll_source: "manual" as const, manual_rolls: faces ?? {} } : {}),
       },
       () => setSending(false),
     )
@@ -71,8 +95,16 @@ function ReactionPrompt({ offer, online }: { offer: CombatReactionOffer; online:
           action: offer.action,
         })}
       </p>
+      {manual && specs.length > 0 ? (
+        <ManualDiceFields specs={specs} values={dice} onChange={setDice} disabled={!online || sending} />
+      ) : null}
       {offer.choices.map((choice) => (
-        <button key={choice.id} type="button" disabled={!online || sending} onClick={() => choose(choice.id)}>
+        <button
+          key={choice.id}
+          type="button"
+          disabled={!online || sending || (manual && facesFor(choice) === null)}
+          onClick={() => choose(choice)}
+        >
           {choice.label}
         </button>
       ))}
@@ -80,7 +112,7 @@ function ReactionPrompt({ offer, online }: { offer: CombatReactionOffer; online:
   )
 }
 
-function ActionForm({ combat, online }: { combat: CombatSurface; online: boolean }) {
+function ActionForm({ combat, online, manual }: { combat: CombatSurface; online: boolean; manual: boolean }) {
   const { t } = useTranslation()
   const [actionId, setActionId] = useState("")
   const [modeId, setModeId] = useState("")
@@ -88,17 +120,30 @@ function ActionForm({ combat, online }: { combat: CombatSurface; online: boolean
   const [target, setTarget] = useState("")
   const [distance, setDistance] = useState("")
   const [sending, setSending] = useState(false)
+  const [dice, setDice] = useState<DiceValues>({})
   const action = combat.actions.find((entry) => entry.id === actionId) ?? combat.actions[0]
   const mode = action?.modes.find((entry) => entry.id === modeId) ?? action?.modes[0]
+  const diceSpecs = manual ? (mode?.manual_rolls ?? []) : []
+  const faces = manual ? manualFaces(diceSpecs, dice) : null
   const weapon = mode?.weapons.find((entry) => entry.id === weaponId) ?? mode?.weapons[0]
   const selectedTarget = action?.targets.includes(target) ? target : action?.targets[0]
   const hasTarget = (action?.targets.length ?? 0) > 0
-  const canSend = Boolean(online && action && mode && weapon && (!hasTarget || selectedTarget) && !sending)
+  // Only a mode the server declares distance-capable gets the field (and the value).
+  const takesDistance = hasTarget && mode?.accepts_distance === true
+  const canSend = Boolean(
+    online &&
+    action &&
+    mode &&
+    weapon &&
+    (!hasTarget || selectedTarget) &&
+    !sending &&
+    (!manual || faces !== null),
+  )
   const numericDistance = useMemo(() => {
-    if (!distance.trim()) return undefined
+    if (!takesDistance || !distance.trim()) return undefined
     const value = Number(distance)
     return Number.isInteger(value) && value >= 0 ? value : null
-  }, [distance])
+  }, [distance, takesDistance])
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -114,8 +159,12 @@ function ActionForm({ combat, online }: { combat: CombatSurface; online: boolean
         mode: mode.id,
         weapon_instance_id: weapon.id,
         ...(numericDistance === undefined ? {} : { distance: numericDistance }),
+        ...(manual ? { roll_source: "manual" as const, manual_rolls: faces ?? {} } : {}),
       },
-      () => setSending(false),
+      () => {
+        setSending(false)
+        setDice({})
+      },
     )
   }
 
@@ -176,7 +225,7 @@ function ActionForm({ combat, online }: { combat: CombatSurface; online: boolean
           </select>
         </label>
       ) : null}
-      {hasTarget ? (
+      {takesDistance ? (
         <label>
           {t("combat.distance")}
           <input
@@ -187,6 +236,9 @@ function ActionForm({ combat, online }: { combat: CombatSurface; online: boolean
             onChange={(event) => setDistance(event.target.value)}
           />
         </label>
+      ) : null}
+      {diceSpecs.length > 0 ? (
+        <ManualDiceFields specs={diceSpecs} values={dice} onChange={setDice} disabled={!online || sending} />
       ) : null}
       <button type="submit" disabled={!canSend || numericDistance === null}>
         {t("combat.submit")}
@@ -199,6 +251,7 @@ function ActionForm({ combat, online }: { combat: CombatSurface; online: boolean
 export default function CombatActionPanel() {
   const { t } = useTranslation()
   const combat = useSessionStore((s) => s.game?.combat)
+  const manual = useSessionStore((s) => s.game?.roll_mode === "manual")
   const online = useConnectionStore((s) => s.status === "online")
   const [ending, setEnding] = useState(false)
   if (!combat) return null
@@ -208,8 +261,19 @@ export default function CombatActionPanel() {
       <strong>{t("combat.title")}</strong>
       {combat.actor ? <span>{combat.actor}</span> : null}
       {combat.state ? <EncounterOrder state={combat.state} /> : null}
-      {combat.reaction ? <ReactionPrompt offer={combat.reaction} online={online} /> : null}
-      {combat.actions.length > 0 ? <ActionForm key={combat.actor} combat={combat} online={online} /> : null}
+      {combat.reaction ? (
+        <ReactionPrompt key={combat.reaction.id} offer={combat.reaction} online={online} manual={manual} />
+      ) : null}
+      {combat.actions.length > 0 ? (
+        // A new surface (another actor, or different offered options) rebuilds the form, so
+        // nothing chosen or typed against the previous surface can be sent.
+        <ActionForm
+          key={`${combat.actor}:${JSON.stringify(combat.actions)}`}
+          combat={combat}
+          online={online}
+          manual={manual}
+        />
+      ) : null}
       {endTurn ? (
         <button
           type="button"

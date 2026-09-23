@@ -29,7 +29,12 @@
     "unknownAttacker": "看不见的攻击者",
     "defeated": "已退出战斗",
     "targetDefeated": "{{target}} 退出了战斗。",
-    "unseenCombatant": "一名看不见的战斗者"
+    "unseenCombatant": "一名看不见的战斗者",
+    "rollMode": "掷骰",
+    "rollModeServer": "系统掷骰",
+    "rollModeManual": "我自己掷",
+    "manualThrow": "{{label}}：掷 {{expression}}",
+    "sourceManual": "玩家输入"
   },
   "character": {
     "profile": "创建档案（如系统要求）",

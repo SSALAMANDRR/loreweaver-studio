@@ -86,18 +86,20 @@ function ActionResultEntry({ frame }: { frame: ActionResultFrame }) {
   const reaction = result.reaction
   const declined = reaction?.declined === true
   const hasRoll = result.attack_roll !== null
+  const manualMark = (rollId: string) =>
+    result.roll_sources?.[rollId] === "manual" ? ` (${t("combat.sourceManual")})` : ""
   return <article className="log-entry combat-result" aria-label={t("combat.result")}>
     <header className="entry-speaker">{t("combat.result")}</header>
     <div className="entry-body">
       <p>{actor}{target ? ` → ${target}` : ""} · {stripControlChars(frame.labels?.action ?? result.action)}{weapon ? ` · ${weapon}` : ""}</p>
-      {hasRoll ? <p>{t("combat.roll")}: {result.attack_roll}{result.attack_target !== null ? ` / ${result.attack_target}` : ""} · {result.success ? t("combat.hit") : t("combat.miss")} · {t("combat.degrees")}: {result.degrees}</p> : null}
+      {hasRoll ? <p>{t("combat.roll")}: {result.attack_roll}{manualMark("attack")}{result.attack_target !== null ? ` / ${result.attack_target}` : ""} · {result.success ? t("combat.hit") : t("combat.miss")} · {t("combat.degrees")}: {result.degrees}</p> : null}
       {result.pending_reaction ? <p role="status">{t("combat.awaitingReaction", { defender: result.pending_reaction.defender })}</p> : null}
       {result.hits.map((hit, index) => {
         const location = stripControlChars(frame.labels?.locations[String(hit.location)] ?? String(hit.location ?? ""))
         const mitigated = hit.armour_after_penetration !== null && hit.tb_reduction !== null
         return <p key={index}>{t("combat.hitNumber", { number: index + 1 })}: {location} · {t("combat.damage")}: {mitigated ? `${String(hit.raw_damage)} − ${String(hit.armour_after_penetration)} − ${String(hit.tb_reduction)} = ` : ""}{String(hit.final_damage)}</p>
       })}
-      {reaction ? <p>{t("combat.reaction")}: {stripControlChars(frame.labels?.reaction ?? String(reaction.type ?? ""))}{declined ? "" : ` · ${String(reaction.roll)}${reaction.target !== undefined ? ` / ${String(reaction.target)}` : ""} · ${reaction.success ? t("combat.success") : t("combat.failure")}`}</p> : null}
+      {reaction ? <p>{t("combat.reaction")}: {stripControlChars(frame.labels?.reaction ?? String(reaction.type ?? ""))}{declined ? "" : ` · ${String(reaction.roll)}${manualMark("reaction")}${reaction.target !== undefined ? ` / ${String(reaction.target)}` : ""} · ${reaction.success ? t("combat.success") : t("combat.failure")}`}</p> : null}
       {result.ammo_before !== null ? <p>{t("combat.ammo")}: {result.ammo_before} → {result.ammo_after}</p> : null}
       {hasRoll && !result.pending_reaction ? <p>{t("combat.damage")}: {result.final_damage}</p> : null}
       {result.target_defeated ? <p role="status">{t("combat.targetDefeated", { target: target || t("combat.unseenCombatant") })}</p> : null}

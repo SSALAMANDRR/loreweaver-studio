@@ -4,6 +4,7 @@ import { quitTable } from "../../store/hostLocal"
 import InputBox from "./InputBox"
 import CombatActionPanel from "./CombatActionPanel"
 import ManualRollCard from "./ManualRollCard"
+import RollModeToggle from "./RollModeToggle"
 import NarrativeLog from "./NarrativeLog"
 import { PanelSidebar, PanelTray } from "./panels/PanelDeck"
 import PanelMenu from "./panels/PanelMenu"
@@ -50,6 +51,7 @@ export default function SessionView({
         <TurnStatus />
         <NarrativeLog />
         <PanelTray />
+        <RollModeToggle />
         <ManualRollCard />
         <CombatActionPanel />
         <InputBox />

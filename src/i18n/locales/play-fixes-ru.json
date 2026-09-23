@@ -29,7 +29,12 @@
     "unknownAttacker": "Невидимый противник",
     "defeated": "выбыл из боя",
     "targetDefeated": "{{target}} выбывает из боя.",
-    "unseenCombatant": "Невидимый боец"
+    "unseenCombatant": "Невидимый боец",
+    "rollMode": "Броски",
+    "rollModeServer": "Бросает система",
+    "rollModeManual": "Бросаю сам",
+    "manualThrow": "{{label}}: бросьте {{expression}}",
+    "sourceManual": "введено игроком"
   },
   "character": {
     "profile": "Профиль создания (если нужен)",
