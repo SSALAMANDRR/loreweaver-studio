@@ -26,7 +26,10 @@
     "hiddenTurn": "An unseen combatant is acting.",
     "awaitingReaction": "Waiting for {{defender}} to react.",
     "reactionPrompt": "{{actor}} is hit by {{attacker}} ({{action}}). Choose a reaction.",
-    "unknownAttacker": "Unseen attacker"
+    "unknownAttacker": "Unseen attacker",
+    "defeated": "out of the fight",
+    "targetDefeated": "{{target}} is out of the fight.",
+    "unseenCombatant": "An unseen combatant"
   },
   "character": {
     "profile": "Creation profile (if required)",

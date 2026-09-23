@@ -100,6 +100,7 @@ function ActionResultEntry({ frame }: { frame: ActionResultFrame }) {
       {reaction ? <p>{t("combat.reaction")}: {stripControlChars(frame.labels?.reaction ?? String(reaction.type ?? ""))}{declined ? "" : ` · ${String(reaction.roll)}${reaction.target !== undefined ? ` / ${String(reaction.target)}` : ""} · ${reaction.success ? t("combat.success") : t("combat.failure")}`}</p> : null}
       {result.ammo_before !== null ? <p>{t("combat.ammo")}: {result.ammo_before} → {result.ammo_after}</p> : null}
       {hasRoll && !result.pending_reaction ? <p>{t("combat.damage")}: {result.final_damage}</p> : null}
+      {result.target_defeated ? <p role="status">{t("combat.targetDefeated", { target: target || t("combat.unseenCombatant") })}</p> : null}
     </div>
   </article>
 }

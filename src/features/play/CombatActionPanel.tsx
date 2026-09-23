@@ -29,11 +29,12 @@ function EncounterOrder({ state }: { state: CombatEncounterView }) {
           <li
             key={entry.name}
             aria-current={entry.current ? "step" : undefined}
-            className={entry.current ? "current" : undefined}
+            className={entry.defeated ? "defeated" : entry.current ? "current" : undefined}
           >
             {entry.name}
             {entry.initiative !== null ? ` (${entry.initiative})` : ""}
             {entry.controlled ? ` · ${t("combat.you")}` : ""}
+            {entry.defeated ? ` · ${t("combat.defeated")}` : ""}
           </li>
         ))}
       </ol>

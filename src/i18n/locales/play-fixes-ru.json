@@ -26,7 +26,10 @@
     "hiddenTurn": "Действует невидимый боец.",
     "awaitingReaction": "Ожидается реакция: {{defender}}.",
     "reactionPrompt": "{{attacker}} попадает по {{actor}} ({{action}}). Выберите реакцию.",
-    "unknownAttacker": "Невидимый противник"
+    "unknownAttacker": "Невидимый противник",
+    "defeated": "выбыл из боя",
+    "targetDefeated": "{{target}} выбывает из боя.",
+    "unseenCombatant": "Невидимый боец"
   },
   "character": {
     "profile": "Профиль создания (если нужен)",

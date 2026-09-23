@@ -62,6 +62,21 @@ describe("NarrativeLog", () => {
     expect(screen.getByText(/Unseen attacker → Ada/)).toBeInTheDocument()
   })
 
+  it("shows the server's defeat verdict and names no hidden target", () => {
+    const base = {
+      actor: "Ada", action: "custom", weapon_instance_id: "i1", weapon_profile_id: "p1",
+      attack_target: 60, attack_roll: 20, success: true, margin: 4, degrees: 4, hit_location: "body",
+      reaction: null, raw_damage: 9, penetration: 0, armour_before: null, armour_after_penetration: null,
+      tb_reduction: null, final_damage: 7, ammo_before: null, ammo_after: null, state_delta: null,
+      validation_failure: null, hits: [], shots_fired: 0, target_defeated: true,
+    }
+    ingest({ type: "action_result", id: "d1", ok: true, validation_failure: null, result: { ...base, target: "Beast" } } as ActionResultFrame)
+    ingest({ type: "action_result", id: "d2", ok: true, validation_failure: null, result: { ...base, target: "" } } as ActionResultFrame)
+    render(<NarrativeLog />)
+    expect(screen.getByText("Beast is out of the fight.")).toBeInTheDocument()
+    expect(screen.getByText("An unseen combatant is out of the fight.")).toBeInTheDocument()
+  })
+
   it("renders markdown narrative as rich text", () => {
     ingest({
       type: "narrative",

@@ -173,3 +173,29 @@ it("masks a hidden acting combatant exactly as the server did", () => {
   expect(screen.getByText("An unseen combatant is acting.")).toBeInTheDocument()
   expect(screen.getByText(/hit by Unseen attacker/)).toBeInTheDocument()
 })
+
+it("marks a combatant the server reported as defeated without deciding anything itself", () => {
+  const afterDefeat: CombatSurface = {
+    actor: "Ada",
+    actions: [],
+    state: encounter({
+      order: [
+        { name: "Ada", initiative: 14, current: true, controlled: true, keeper_controlled: false },
+        {
+          name: "Beast",
+          initiative: 6,
+          current: false,
+          controlled: false,
+          keeper_controlled: true,
+          defeated: true,
+        },
+      ],
+    }),
+  }
+  useSessionStore.setState({ game: surface(afterDefeat) })
+  render(<CombatActionPanel />)
+  const beast = screen.getByText(/Beast \(6\)/).closest("li")
+  expect(beast).toHaveTextContent("out of the fight")
+  expect(beast).toHaveClass("defeated")
+  expect(screen.getByText(/Ada \(14\)/).closest("li")).not.toHaveTextContent("out of the fight")
+})

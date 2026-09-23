@@ -26,7 +26,10 @@
     "hiddenTurn": "一名看不见的战斗者正在行动。",
     "awaitingReaction": "等待 {{defender}} 作出反应。",
     "reactionPrompt": "{{actor}} 被 {{attacker}} 击中（{{action}}）。请选择反应。",
-    "unknownAttacker": "看不见的攻击者"
+    "unknownAttacker": "看不见的攻击者",
+    "defeated": "已退出战斗",
+    "targetDefeated": "{{target}} 退出了战斗。",
+    "unseenCombatant": "一名看不见的战斗者"
   },
   "character": {
     "profile": "创建档案（如系统要求）",
