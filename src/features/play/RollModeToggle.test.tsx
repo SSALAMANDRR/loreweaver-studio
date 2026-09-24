@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { act, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { StateFrame } from "@loreweaver/protocol"
 import { beforeEach, expect, it, vi } from "vitest"
@@ -38,4 +38,16 @@ it("stays hidden against a server that does not report a dice mode", () => {
   useSessionStore.setState({ game: state() })
   const { container } = render(<RollModeToggle />)
   expect(container).toBeEmptyDOMElement()
+})
+
+it("keeps the server's dice mode across state updates, including the one that ends a fight", () => {
+  useSessionStore.setState({
+    game: { ...state("manual"), combat: { actor: "Ada", actions: [], state: null } },
+  })
+  render(<RollModeToggle />)
+  expect(screen.getByRole("radio", { name: "I roll myself" })).toHaveAttribute("aria-checked", "true")
+  act(() => {
+    useSessionStore.setState({ game: state("manual") })
+  })
+  expect(screen.getByRole("radio", { name: "I roll myself" })).toHaveAttribute("aria-checked", "true")
 })

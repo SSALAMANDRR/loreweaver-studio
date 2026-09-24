@@ -34,7 +34,9 @@
     "rollModeServer": "System rolls",
     "rollModeManual": "I roll myself",
     "manualThrow": "{{label}}: roll {{expression}}",
-    "sourceManual": "entered by player"
+    "sourceManual": "entered by player",
+    "npc": "NPC",
+    "degreesDie": "one die counted as the degrees of success"
   },
   "character": {
     "profile": "Creation profile (if required)",

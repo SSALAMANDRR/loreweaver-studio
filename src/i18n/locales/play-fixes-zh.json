@@ -34,7 +34,9 @@
     "rollModeServer": "系统掷骰",
     "rollModeManual": "我自己掷",
     "manualThrow": "{{label}}：掷 {{expression}}",
-    "sourceManual": "玩家输入"
+    "sourceManual": "玩家输入",
+    "npc": "NPC",
+    "degreesDie": "一颗伤害骰按成功度计"
   },
   "character": {
     "profile": "创建档案（如系统要求）",

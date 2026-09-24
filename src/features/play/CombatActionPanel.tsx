@@ -36,7 +36,9 @@ function EncounterOrder({ state }: { state: CombatEncounterView }) {
           >
             {entry.name}
             {entry.initiative !== null ? ` (${entry.initiative})` : ""}
-            {entry.controlled ? ` · ${t("combat.you")}` : ""}
+            {/* A keeper controls every NPC too: "you" marks only the viewer's own character. */}
+            {entry.controlled && !entry.keeper_controlled ? ` · ${t("combat.you")}` : ""}
+            {entry.keeper_controlled ? ` · ${t("combat.npc")}` : ""}
             {entry.defeated ? ` · ${t("combat.defeated")}` : ""}
           </li>
         ))}

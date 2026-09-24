@@ -34,7 +34,9 @@
     "rollModeServer": "Бросает система",
     "rollModeManual": "Бросаю сам",
     "manualThrow": "{{label}}: бросьте {{expression}}",
-    "sourceManual": "введено игроком"
+    "sourceManual": "введено игроком",
+    "npc": "НИП",
+    "degreesDie": "один куб урона заменён степенями успеха"
   },
   "character": {
     "profile": "Профиль создания (если нужен)",

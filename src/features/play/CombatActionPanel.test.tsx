@@ -355,3 +355,39 @@ it("rebuilds the form from a fresh surface so no stale choice or distance is sen
   })
   expect(frame).not.toHaveProperty("distance")
 })
+
+it("marks only the viewer's own character as theirs when a keeper also controls the NPCs", () => {
+  // A keeper viewer playing their own PC: the server reports both entries as controlled.
+  const keeperView: CombatSurface = {
+    actor: "Kardel",
+    actions: [],
+    state: encounter({
+      current_actor: "Kardel",
+      order: [
+        { name: "Kardel", initiative: 14, current: true, controlled: true, keeper_controlled: false },
+        { name: "Cultist", initiative: 6, current: false, controlled: true, keeper_controlled: true },
+      ],
+    }),
+  }
+  useSessionStore.setState({ game: surface(keeperView) })
+  render(<CombatActionPanel />)
+  const own = screen.getByText(/Kardel \(14\)/).closest("li")
+  const npc = screen.getByText(/Cultist \(6\)/).closest("li")
+  expect(own).toHaveTextContent("· you")
+  expect(own).not.toHaveTextContent("NPC")
+  expect(npc).toHaveTextContent("· NPC")
+  expect(npc).not.toHaveTextContent("you")
+})
+
+it("closes when the server's next state no longer carries an encounter", () => {
+  useSessionStore.setState({ game: surface(myTurn) })
+  render(<CombatActionPanel />)
+  expect(screen.getByRole("region", { name: "Combat" })).toBeInTheDocument()
+  act(() => {
+    useSessionStore.setState({
+      game: { type: "state", party: [], initiative: [], online: 1, roll_mode: "manual" },
+    })
+  })
+  expect(screen.queryByRole("region", { name: "Combat" })).not.toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "Server end turn" })).not.toBeInTheDocument()
+})

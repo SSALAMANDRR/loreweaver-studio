@@ -242,3 +242,24 @@ describe("NarrativeLog", () => {
     expect(notice?.className).not.toContain("level-error")
   })
 })
+
+describe("NarrativeLog combat damage source", () => {
+  beforeEach(() => useSessionStore.getState().clear())
+
+  it("says when the server counted a damage die as the degrees of success", () => {
+    ingest({
+      type: "action_result", id: "dos", ok: true, validation_failure: null, encounter_ended: true,
+      result: {
+        actor: "Ada", target: "Beast", action: "custom", weapon_instance_id: "i1", weapon_profile_id: "p1",
+        attack_target: 60, attack_roll: 5, success: true, margin: 6, degrees: 6, hit_location: "body",
+        reaction: null, raw_damage: 9, penetration: 0, armour_before: 0, armour_after_penetration: 0,
+        tb_reduction: 3, final_damage: 6, ammo_before: 4, ammo_after: 3, state_delta: null,
+        validation_failure: null, shots_fired: 1, target_defeated: true,
+        hits: [{ location: "body", raw_damage: 9, armour_after_penetration: 0, tb_reduction: 3, final_damage: 6, degrees_substituted: true }],
+      },
+    } as ActionResultFrame)
+    render(<NarrativeLog />)
+    expect(screen.getByText(/Damage: 9 − 0 − 3 = 6 \(one die counted as the degrees of success\)/)).toBeInTheDocument()
+    expect(screen.getByText("Beast is out of the fight.")).toBeInTheDocument()
+  })
+})
